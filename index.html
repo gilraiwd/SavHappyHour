@@ -101,7 +101,7 @@
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(15,35,31,0.75);
     display: flex; align-items: flex-start; justify-content: center;
-    padding: 24px 16px; overflow-y: auto; z-index: 50;
+    padding: 24px 16px; overflow-y: auto; z-index: 2000;
   }
   .field-input {
     width: 100%; border: 1px solid rgba(32,28,20,0.25); background: #fffdf7; color: var(--ink);
@@ -123,7 +123,7 @@
   .link-pill { font-size: 11px; color: var(--green); text-decoration: underline; text-underline-offset: 2px; }
   .fab {
     position: fixed; bottom: 24px; right: 24px; border-radius: 999px; padding: 14px 22px; font-size: 15px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35); z-index: 900;
   }
   .error-banner { background: rgba(166,75,42,0.2); border: 1px solid rgba(166,75,42,0.4); color: var(--off-white); padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
   .empty-state { text-align: center; margin-top: 60px; padding: 0 20px; }
@@ -1104,32 +1104,9 @@ async function deleteDeal(id) {
     state.confirmDeleteId = null; render();
   }
 }
-// Temporarily restored to push the new structured hoursBlocks format into venues
-// that were seeded before that change. Remove again once you've run it.
-async function seedStarterDeals() {
-  const btn = document.getElementById("seed-btn") || document.getElementById("seed-link");
-  if (btn) { btn.disabled = true; btn.textContent = "Syncing Savannah starters…"; }
-  const existingByName = new Map(
-    state.deals.map(d => [(d.venue || "").trim().toLowerCase(), d.id])
-  );
-  for (const deal of SAVANNAH_STARTER_DEALS) {
-    const key = deal.venue.trim().toLowerCase();
-    try {
-      const coords = await geocodeAddress(deal.address);
-      const payload = { ...deal };
-      if (coords) { payload.lat = coords.lat; payload.lng = coords.lng; }
-      const existingId = existingByName.get(key);
-      if (existingId) {
-        await db.collection("deals").doc(existingId).update({ ...payload, updatedAt: Date.now() });
-      } else {
-        await db.collection("deals").add({ ...payload, createdAt: Date.now(), updatedAt: Date.now() });
-      }
-    } catch (e) {
-      console.error("Sync failed for", deal.venue, e);
-    }
-    await new Promise(r => setTimeout(r, 1100)); // be polite to the free geocoding service
-  }
-}
+// Note: the "sync starters" feature has been removed on purpose — it upserted by venue
+// name, which risks clobbering hand edits once everyone's data is loaded in. SAVANNAH_STARTER_DEALS
+// above is kept only as a reference of what was originally seeded.
 function saveName(name) {
   state.myName = name;
   localStorage.setItem("tab-my-name", name);
@@ -1231,7 +1208,6 @@ function render() {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <div id="name-field"></div>
-            <button class="mono" id="seed-link" title="Adds any new Savannah starter venues and updates ones you already have with the latest info" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">sync Savannah starters</button>
             <button class="mono" id="about-link" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">about & updates</button>
           </div>
         </div>
@@ -1700,8 +1676,6 @@ function bindEvents() {
   if (addBtn) addBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
   const emptyAddBtn = document.getElementById("empty-add-btn");
   if (emptyAddBtn) emptyAddBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
-  const seedLink = document.getElementById("seed-link");
-  if (seedLink) seedLink.onclick = () => seedStarterDeals();
   const aboutLink = document.getElementById("about-link");
   if (aboutLink) aboutLink.onclick = () => { state.showAbout = true; render(); };
 
