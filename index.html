@@ -78,6 +78,15 @@
     padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;
     border: 1px solid rgba(32,28,20,0.35);
   }
+  .fav-btn {
+    background: transparent; border: none; font-size: 20px; line-height: 1; cursor: pointer;
+    color: var(--gold); padding: 0 2px;
+  }
+  .open-badge, .closed-badge {
+    font-weight: 700; letter-spacing: .03em; padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  }
+  .open-badge { background: rgba(28,107,58,0.15); color: #1c6b3a; }
+  .closed-badge { background: rgba(166,75,42,0.15); color: var(--rust); }
   .pour-dot { width: 6px; height: 6px; border-radius: 50%; background: #1c6b3a; animation: pulse 1.6s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) { .pour-dot { animation: none; } }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
@@ -242,7 +251,7 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Cotton & Rye",
     neighborhood: "Starland District",
     address: "1801 Habersham St, Savannah, GA 31401",
-    hours: "Tue–Sat 5–10pm · Closed Sun & Mon",
+    hours: "Tue–Sat 5pm–10pm · Closed Sun & Mon",
     website: "https://www.cottonandrye.com",
     instagram: "", facebook: "https://www.facebook.com/cotrye/",
     schedules: [
@@ -257,7 +266,7 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Brochu's Family Tradition — Sour Hour",
     neighborhood: "Baldwin Park",
     address: "2400 Bull St, Savannah, GA 31401",
-    hours: "Wed–Thu & Sun 5–9pm · Fri–Sat 5–10pm · Closed Mon–Tue",
+    hours: "Wed–Thu & Sun 5pm–9pm · Fri–Sat 5pm–10pm · Closed Mon–Tue",
     website: "https://www.brochusfamilytradition.com",
     instagram: "", facebook: "",
     schedules: [
@@ -495,7 +504,7 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Chive Sea Bar & Lounge",
     neighborhood: "Broughton St / Downtown",
     address: "4 W Broughton St, Savannah, GA 31401",
-    hours: "Daily approx. 10am–3pm & 5–10pm (varies by day — worth confirming)",
+    hours: "Daily approx. 10am–3pm · Daily approx. 5pm–10pm (varies by day — worth confirming)",
     website: "https://www.chivelounge.com",
     instagram: "", facebook: "",
     schedules: [],
@@ -626,8 +635,9 @@ const state = {
   search: "",
   myLocation: null,
   locating: false,
-  sortNear: false,
+  sortMode: "alpha", // 'alpha' | 'near' | 'soon' | 'new'
   focusUserLocation: false,
+  favorites: new Set(JSON.parse(localStorage.getItem("tab-favorites") || "[]")),
 };
 
 let leafletMapInstance = null;
@@ -739,21 +749,105 @@ function dealMatchesSearch(deal, q) {
   return haystack.some(h => (h || "").toLowerCase().includes(q));
 }
 
-async function toggleNearMe() {
-  if (state.sortNear) { state.sortNear = false; render(); return; }
-  if (state.myLocation) { state.sortNear = true; render(); return; }
-  state.locating = true;
-  render();
+// Best-effort parser for the free-text "hours" field (e.g. "Mon–Thu 3pm–3am · Fri–Sat 12pm–3am").
+// Returns null if it can't confidently parse anything, so we never show a wrong open/closed badge.
+function parseClockTime(t) {
+  const m = t.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  if (m[3] === "am") { if (h === 12) h = 0; } else { if (h !== 12) h += 12; }
+  return `${String(h).padStart(2,"0")}:${String(min).padStart(2,"0")}`;
+}
+function parseDayPart(text) {
+  if (!text) return [];
+  if (/daily|every ?day/i.test(text)) return [0,1,2,3,4,5,6];
+  const abbr = DAYS.map(d => d.toLowerCase());
+  const groups = text.split(/&|,/).map(s => s.trim()).filter(Boolean);
+  const result = new Set();
+  groups.forEach(g => {
+    const range = g.match(/([a-z]{3})[a-z]*\s*[–-]\s*([a-z]{3})[a-z]*/i);
+    if (range) {
+      const startIdx = abbr.indexOf(range[1].toLowerCase());
+      const endIdx = abbr.indexOf(range[2].toLowerCase());
+      if (startIdx !== -1 && endIdx !== -1) {
+        let i = startIdx;
+        for (let n = 0; n < 7; n++) {
+          result.add(i);
+          if (i === endIdx) break;
+          i = (i + 1) % 7;
+        }
+      }
+    } else {
+      const idx = abbr.indexOf(g.toLowerCase().slice(0, 3));
+      if (idx !== -1) result.add(idx);
+    }
+  });
+  return [...result];
+}
+function parseHoursToBlocks(hoursText) {
+  if (!hoursText) return null;
   try {
-    state.myLocation = await getUserLocation();
-    state.sortNear = true;
-    state.error = null;
+    const segments = hoursText.split("·").map(s => s.trim()).filter(Boolean);
+    const blocks = [];
+    for (const seg of segments) {
+      if (/closed/i.test(seg) && !/\d/.test(seg)) continue; // "Closed Sun" — nothing to add
+      const timeMatch = seg.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*[–-]\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+      if (!timeMatch) continue;
+      const days = parseDayPart(seg.slice(0, timeMatch.index));
+      if (!days.length) continue;
+      const startTime = parseClockTime(timeMatch[1]);
+      const endTime = parseClockTime(timeMatch[2]);
+      if (!startTime || !endTime) continue;
+      blocks.push({ days, startTime, endTime });
+    }
+    return blocks.length ? blocks : null;
   } catch (e) {
-    state.error = locationErrorMessage(e);
-  } finally {
-    state.locating = false;
-    render();
+    return null;
   }
+}
+function isOpenNow(deal) {
+  const blocks = parseHoursToBlocks(deal.hours);
+  if (!blocks) return null; // unknown — don't guess
+  return blocks.some(b => scheduleActive(b, state.now));
+}
+
+function toggleFavorite(id) {
+  if (state.favorites.has(id)) state.favorites.delete(id);
+  else state.favorites.add(id);
+  localStorage.setItem("tab-favorites", JSON.stringify([...state.favorites]));
+  render();
+}
+
+function directionsUrl(deal) {
+  if (typeof deal.lat === "number" && typeof deal.lng === "number") {
+    return `https://www.google.com/maps/dir/?api=1&destination=${deal.lat},${deal.lng}`;
+  }
+  if (deal.address) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(deal.address + ", Savannah, GA")}`;
+  }
+  return null;
+}
+
+async function setSortMode(mode) {
+  if (mode === "near") {
+    if (state.myLocation) { state.sortMode = "near"; render(); return; }
+    state.locating = true;
+    render();
+    try {
+      state.myLocation = await getUserLocation();
+      state.sortMode = "near";
+      state.error = null;
+    } catch (e) {
+      state.error = locationErrorMessage(e);
+    } finally {
+      state.locating = false;
+      render();
+    }
+    return;
+  }
+  state.sortMode = mode;
+  render();
 }
 async function locateOnMap() {
   state.locating = true;
@@ -904,16 +998,27 @@ function getVisibleDeals() {
   else if (typeof state.filter === "number") list = list.filter(d => dealMatchesDay(d, state.filter));
   const q = state.search.trim().toLowerCase();
   if (q) list = list.filter(d => dealMatchesSearch(d, q));
-  if (state.sortNear && state.myLocation) {
-    const loc = state.myLocation;
-    list.sort((a, b) => {
-      const da = (typeof a.lat === "number") ? distanceMiles(loc.lat, loc.lng, a.lat, a.lng) : Infinity;
-      const db = (typeof b.lat === "number") ? distanceMiles(loc.lat, loc.lng, b.lat, b.lng) : Infinity;
+
+  const cmp = (a, b) => {
+    if (state.sortMode === "near" && state.myLocation) {
+      const da = (typeof a.lat === "number") ? distanceMiles(state.myLocation.lat, state.myLocation.lng, a.lat, a.lng) : Infinity;
+      const db = (typeof b.lat === "number") ? distanceMiles(state.myLocation.lat, state.myLocation.lng, b.lat, b.lng) : Infinity;
       return da - db;
-    });
-  } else {
-    list.sort((a, b) => (a.venue || "").localeCompare(b.venue || "", undefined, { sensitivity: "base" }));
-  }
+    }
+    if (state.sortMode === "soon") {
+      return nextOccurrence(a, state.now) - nextOccurrence(b, state.now);
+    }
+    if (state.sortMode === "new") {
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    }
+    return (a.venue || "").localeCompare(b.venue || "", undefined, { sensitivity: "base" });
+  };
+  list.sort((a, b) => {
+    const aFav = state.favorites.has(a.id) ? 0 : 1;
+    const bFav = state.favorites.has(b.id) ? 0 : 1;
+    if (aFav !== bFav) return aFav - bFav;
+    return cmp(a, b);
+  });
   return list;
 }
 
@@ -954,8 +1059,14 @@ function render() {
         <div class="filter-row">
           <button class="filter-chip ${state.filter==='live'?'active':''}" data-filter="live">Pouring now</button>
           <button class="filter-chip ${state.filter==='all'?'active':''}" data-filter="all">All deals</button>
-          <button class="filter-chip ${state.sortNear?'active':''}" id="near-me-chip">${state.locating ? "Locating…" : "Near me"}</button>
           ${DAYS.map((d,i)=>`<button class="filter-chip ${state.filter===i?'active':''}" data-filter="${i}">${d}</button>`).join("")}
+        </div>
+        <div class="filter-row">
+          <span class="mono" style="font-size:11px;opacity:.5;align-self:center;margin-right:2px;">Sort:</span>
+          <button class="filter-chip ${state.sortMode==='alpha'?'active':''}" data-sort="alpha">A–Z</button>
+          <button class="filter-chip ${state.sortMode==='soon'?'active':''}" data-sort="soon">Starting soon</button>
+          <button class="filter-chip ${state.sortMode==='new'?'active':''}" data-sort="new">Newest</button>
+          <button class="filter-chip ${state.sortMode==='near'?'active':''}" data-sort="near">${state.locating ? "Locating…" : "Near me"}</button>
         </div>
       </div>
     </header>
@@ -1109,16 +1220,22 @@ function dealCardHtml(deal) {
   const filterDay = typeof state.filter === "number" ? state.filter : -1;
   const schedules = getSchedules(deal);
   const hasLinks = deal.website || deal.instagram || deal.facebook;
-  const showDistance = state.sortNear && state.myLocation && typeof deal.lat === "number";
+  const showDistance = state.sortMode === "near" && state.myLocation && typeof deal.lat === "number";
   const distance = showDistance ? distanceMiles(state.myLocation.lat, state.myLocation.lng, deal.lat, deal.lng) : null;
+  const isFav = state.favorites.has(deal.id);
+  const openNow = isOpenNow(deal);
+  const dirUrl = directionsUrl(deal);
   return `
     <div class="ticket" id="deal-${deal.id}" style="padding:22px 20px 18px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
         <div>
-          <h2 class="display" style="font-size:22px;font-weight:700;margin:0;">${esc(deal.venue)}</h2>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <h2 class="display" style="font-size:22px;font-weight:700;margin:0;">${esc(deal.venue)}</h2>
+            <button class="fav-btn" data-fav="${deal.id}" title="${isFav ? "Remove favorite" : "Mark as favorite"}" aria-label="${isFav ? "Remove favorite" : "Mark as favorite"}">${isFav ? "★" : "☆"}</button>
+          </div>
           ${deal.neighborhood ? `<p class="mono" style="font-size:12px;margin:3px 0 0;opacity:.65;">${esc(deal.neighborhood)}</p>` : ""}
           ${distance !== null ? `<p class="mono" style="font-size:11px;margin:3px 0 0;opacity:.7;color:var(--green);font-weight:600;">📍 ${fmtDistance(distance)}</p>` : ""}
-          ${deal.hours ? `<p class="mono" style="font-size:11px;margin:4px 0 0;opacity:.6;">Open ${esc(deal.hours)}</p>` : ""}
+          ${deal.hours ? `<p class="mono" style="font-size:11px;margin:4px 0 0;opacity:.6;">Open ${esc(deal.hours)}${openNow === true ? ' <span class="open-badge">OPEN NOW</span>' : openNow === false ? ' <span class="closed-badge">CLOSED NOW</span>' : ""}</p>` : ""}
           ${deal.cashOnly ? `<span class="cash-badge" style="margin-top:6px;">💵 CASH ONLY</span>` : ""}
         </div>
         ${active ? `<span class="pour-badge"><span class="pour-dot"></span>POURING NOW</span>` : ""}
@@ -1127,8 +1244,9 @@ function dealCardHtml(deal) {
       ${schedules.length ? `<p class="field-label" style="margin-bottom:4px;">Happy hour</p>` : ""}
       ${schedules.length ? schedules.map(s => scheduleHtml(s, today, filterDay)).join('<div class="tear-divider" style="opacity:.5;"></div>') : `<p class="mono" style="font-size:12px;opacity:.55;">No happy hour info yet — tap Edit to add it.</p>`}
       ${deal.notes ? `<p style="font-size:13px;font-style:italic;margin-top:12px;opacity:.8;">${esc(deal.notes)}</p>` : ""}
-      ${hasLinks ? `
+      ${(hasLinks || dirUrl) ? `
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;">
+          ${dirUrl ? `<a class="link-pill" href="${dirUrl}" target="_blank" rel="noopener">Directions</a>` : ""}
           ${deal.website ? `<a class="link-pill" href="${esc(deal.website)}" target="_blank" rel="noopener">Website</a>` : ""}
           ${deal.instagram ? `<a class="link-pill" href="${esc(deal.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ""}
           ${deal.facebook ? `<a class="link-pill" href="${esc(deal.facebook)}" target="_blank" rel="noopener">Facebook</a>` : ""}
@@ -1313,8 +1431,9 @@ function bindEvents() {
 
   const searchInput = document.getElementById("search-input");
   if (searchInput) searchInput.oninput = (e) => { state.search = e.target.value; render(); };
-  const nearMeChip = document.getElementById("near-me-chip");
-  if (nearMeChip) nearMeChip.onclick = () => toggleNearMe();
+  document.querySelectorAll("[data-sort]").forEach(btn => {
+    btn.onclick = () => setSortMode(btn.dataset.sort);
+  });
   const locateBtn = document.getElementById("locate-btn");
   if (locateBtn) locateBtn.onclick = () => locateOnMap();
 
@@ -1340,6 +1459,9 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-viewmap]").forEach(btn => {
     btn.onclick = () => goToMap(btn.dataset.viewmap);
+  });
+  document.querySelectorAll("[data-fav]").forEach(btn => {
+    btn.onclick = () => toggleFavorite(btn.dataset.fav);
   });
 
   const formOverlay = document.getElementById("form-overlay");
