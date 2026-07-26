@@ -214,6 +214,130 @@ const BEER_ICON_DATA_URL = "data:image/svg+xml," + encodeURIComponent(BEER_ICON_
 
 // Real, currently-published starting deals for Savannah, GA (as of this writing —
 // happy hour menus change often, so double check and edit these once you've added them).
+// Official City of Savannah neighborhood list, used to seed the neighborhoods
+// dropdown the first time (only if nothing's been entered for this city yet).
+const SAVANNAH_NEIGHBORHOODS = [
+  "Abercorn Heights/Lamara Heights/Ridgewood/Poplar Heights",
+  "Ardmore/Gould Estates/Olin Heights",
+  "Ardsley Park/Chatham Crescent",
+  "Avalon/Oglethorpe Mall Area",
+  "Avondale",
+  "Bacon Park Area/Sandfly",
+  "Baldwin Park",
+  "Bay Street Viaduct Area",
+  "Beach High School Area",
+  "Beach Institute",
+  "Belford",
+  "Benjamin Van Clark Park",
+  "Bingville",
+  "Blackshear",
+  "Bonaventure Cemetery",
+  "Bradley Pointe South Area",
+  "Brookview/Skidaway Terrace/Parkview",
+  "Cann Park",
+  "Carver Heights",
+  "Chatham Parkway",
+  "Chippewa",
+  "Cloverdale",
+  "Coffee Bluff/Rose Dhu",
+  "Crossroads Business Center",
+  "Cuyler/Brownville",
+  "Dale Terrace/Olympus/Victory Square",
+  "Dean Forest Road Landfill",
+  "Dixon Park",
+  "East Savannah",
+  "East Victorian District",
+  "Eastside",
+  "Edgemere",
+  "Fairway Oaks",
+  "Feiler Park/Hussars Terrace/Dittmerville",
+  "Fernwood/Parkwood",
+  "Forest Park",
+  "Gateway West",
+  "Godley Station",
+  "Gordonston",
+  "Groveland/Kensington Park",
+  "Habersham Woods",
+  "Highland Park",
+  "Hillcrest Area",
+  "Hitch Village/Fred Wessels Homes",
+  "Hudson Hill/Bayview",
+  "Hunter Army Airfield",
+  "Hutchinson Island",
+  "Jackson Park",
+  "Kayton/Frazier Area",
+  "LaRoche Park/Springhill/Daffin Heights/Wilemere/Shirley Park",
+  "Largo Woods/Quail Forest",
+  "Laurel Grove/Railroad Area",
+  "Leeds Gate/Colonial Village/Hunters Chase",
+  "Liberty City/Summerside/Southover/Richfield",
+  "Live Oak",
+  "Lundhurst/Rivers End",
+  "Magnolia Park/Blueberry Hill",
+  "Mayfair",
+  "Medical Arts",
+  "Memorial Hospital/Fairfield",
+  "Metropolitan",
+  "Midtown",
+  "New Hampstead",
+  "New Hampstead East",
+  "Newton",
+  "North Historic District",
+  "Oakdale",
+  "Oakhurst",
+  "Oakland Park/Northgate/Eastgate/Pinehurst",
+  "Ogeecheeton/Dawes Avenue",
+  "Paradise Park",
+  "Parkside",
+  "Pine Gardens",
+  "Poplar Place/University Place",
+  "Red Gate Farms",
+  "SPA Industrial Park",
+  "Sackville",
+  "Savannah Gardens",
+  "Savannah International Airport/Travis Field",
+  "Savannah State/Glynwood/Placentia Plantation/Brentwood/DeRenne",
+  "Skyland Terrace/Greenway Park/Grove Park/Oglethorpe",
+  "South Garden",
+  "South Historic District",
+  "Starland District",
+  "Sunset Park",
+  "Sweetwater Plantation",
+  "Sylvan Terrace",
+  "Tatemville",
+  "Teal Lake/Gateway Village/South Oaks/Canebreak Village",
+  "The Village/Rio/Armstrong",
+  "Thomas Square",
+  "Tremont Park",
+  "Twickenham",
+  "Vallambrosa",
+  "Victory Heights",
+  "Victory Manor/East Hill/Donwood",
+  "West Savannah",
+  "West Victorian District",
+  "White Bluff Neighborhoods",
+  "White Bluff/Holland Drive",
+  "Wild Heron Plantation/Southern Woods/Habersham Plantation",
+  "Wilshire Estates/Savannah Mall/Tranquilla Woods",
+  "Windsor Forest",
+  "Winter Gardens/Brightwood",
+  "Woodville/Bartow",
+  "Yamacraw Village",
+  // Colloquial names already used on the tab, not on the official city list
+  "Broughton St / Downtown",
+  "Downtown",
+  "Downtown / Historic District",
+  "Downtown / Historic District South",
+  "Eastern Wharf / River St",
+  "Ellis Square / Downtown",
+  "Historic District",
+  "MLK Jr Blvd / Downtown",
+  "Plant Riverside District / River St",
+  "River St",
+  "River St / Historic District",
+  "Starland Yard",
+];
+
 const SAVANNAH_STARTER_DEALS = [
   {
     venue: "Ardsley Station",
@@ -713,6 +837,9 @@ const state = {
   favorites: new Set(JSON.parse(localStorage.getItem("tab-favorites") || "[]")),
   groupByNeighborhood: false,
   cityFilter: "all",
+  neighborhoodsByCity: {},
+  showManageNeighborhoods: false,
+  manageCity: null,
 };
 
 let leafletMapInstance = null;
@@ -1109,6 +1236,60 @@ db.collection("deals").onSnapshot(
   }
 );
 
+function slugifyCity(city) {
+  return (city || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "unknown";
+}
+
+let savannahNeighborhoodsSeedAttempted = false;
+async function seedSavannahNeighborhoodsIfMissing(map) {
+  if (savannahNeighborhoodsSeedAttempted) return;
+  savannahNeighborhoodsSeedAttempted = true;
+  if (map["Savannah, GA"]) return; // already exists — never overwrite hand edits
+  try {
+    await db.collection("neighborhoods").doc("savannah-ga").set({ city: "Savannah, GA", names: SAVANNAH_NEIGHBORHOODS });
+  } catch (e) {
+    console.error("Neighborhood seed failed:", e);
+  }
+}
+
+db.collection("neighborhoods").onSnapshot(
+  (snapshot) => {
+    const map = {};
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.city) map[data.city] = (data.names || []).slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    });
+    state.neighborhoodsByCity = map;
+    seedSavannahNeighborhoodsIfMissing(map);
+    render();
+  },
+  (err) => console.error("Neighborhoods sync error:", err)
+);
+
+async function addNeighborhood(city, name) {
+  if (!city || !name) return;
+  const slug = slugifyCity(city);
+  try {
+    await db.collection("neighborhoods").doc(slug).set(
+      { city, names: firebase.firestore.FieldValue.arrayUnion(name) },
+      { merge: true }
+    );
+  } catch (e) {
+    console.error("Couldn't add neighborhood:", e);
+  }
+}
+async function removeNeighborhood(city, name) {
+  const slug = slugifyCity(city);
+  try {
+    await db.collection("neighborhoods").doc(slug).update({
+      names: firebase.firestore.FieldValue.arrayRemove(name)
+    });
+  } catch (e) {
+    state.error = "Couldn't remove that neighborhood.";
+    render();
+  }
+}
+
 async function addDeal(data) {
   state.saving = true;
   try {
@@ -1244,6 +1425,7 @@ function render() {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <div id="name-field"></div>
+            <button class="mono" id="manage-hoods-link" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">manage neighborhoods</button>
             <button class="mono" id="about-link" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">about & updates</button>
           </div>
         </div>
@@ -1285,6 +1467,7 @@ function render() {
     ${state.showForm ? renderForm() : ""}
     ${state.confirmDeleteId ? renderConfirm() : ""}
     ${state.showAbout ? renderAbout() : ""}
+    ${state.showManageNeighborhoods ? renderManageNeighborhoods() : ""}
   `;
 
   renderNameField();
@@ -1401,24 +1584,47 @@ function renderDealsOrEmpty(list) {
       </div>`;
   }
   if (state.groupByNeighborhood) {
-    const groups = {};
-    list.forEach(d => {
-      const key = (d.neighborhood || "").trim() || "Other";
-      (groups[key] = groups[key] || []).push(d);
-    });
-    const keys = Object.keys(groups).sort((a, b) => {
-      if (a === "Other") return 1;
-      if (b === "Other") return -1;
-      return a.localeCompare(b, undefined, { sensitivity: "base" });
-    });
-    return keys.map(key => `
-      <div style="margin-bottom:24px;">
-        <p class="mono" style="color:var(--gold-bright);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px 2px;">${esc(key)}</p>
-        <div style="display:flex;flex-direction:column;gap:20px;">${groups[key].map(dealCardHtml).join("")}</div>
-      </div>
-    `).join("");
+    const citiesInList = [...new Set(list.map(getCity).filter(Boolean))];
+    if (citiesInList.length > 1) {
+      const byCity = {};
+      list.forEach(d => {
+        const city = getCity(d) || "Other";
+        (byCity[city] = byCity[city] || []).push(d);
+      });
+      const cityKeys = Object.keys(byCity).sort((a, b) => {
+        if (a === "Other") return 1;
+        if (b === "Other") return -1;
+        return a.localeCompare(b, undefined, { sensitivity: "base" });
+      });
+      return cityKeys.map(city => `
+        <div style="margin-bottom:30px;">
+          <p class="display" style="color:var(--gold-bright);font-size:17px;font-weight:700;margin:0 0 12px 2px;border-bottom:1px solid rgba(201,162,39,0.25);padding-bottom:6px;">${esc(city)}</p>
+          ${renderNeighborhoodGroups(byCity[city])}
+        </div>
+      `).join("");
+    }
+    return renderNeighborhoodGroups(list);
   }
   return `<div style="display:flex;flex-direction:column;gap:20px;">${list.map(dealCardHtml).join("")}</div>`;
+}
+
+function renderNeighborhoodGroups(list) {
+  const groups = {};
+  list.forEach(d => {
+    const key = (d.neighborhood || "").trim() || "Other";
+    (groups[key] = groups[key] || []).push(d);
+  });
+  const keys = Object.keys(groups).sort((a, b) => {
+    if (a === "Other") return 1;
+    if (b === "Other") return -1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  });
+  return keys.map(key => `
+    <div style="margin-bottom:24px;">
+      <p class="mono" style="color:var(--gold-bright);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px 2px;">${esc(key)}</p>
+      <div style="display:flex;flex-direction:column;gap:20px;">${groups[key].map(dealCardHtml).join("")}</div>
+    </div>
+  `).join("");
 }
 
 function scheduleHtml(s, today, filterDay) {
@@ -1523,6 +1729,14 @@ function scheduleBlockHtml(s, idx) {
   </div>`;
 }
 
+function neighborhoodOptionsHtml(city, selected) {
+  const list = state.neighborhoodsByCity[(city || "").trim()] || [];
+  const isKnown = selected && list.includes(selected);
+  const opts = list.map(n => `<option value="${esc(n)}" ${n===selected?'selected':''}>${esc(n)}</option>`).join("");
+  const customOpt = (selected && !isKnown) ? `<option value="${esc(selected)}" selected>${esc(selected)}</option>` : "";
+  return `<option value="">— None / not sure —</option>${customOpt}${opts}<option value="__new__">+ Add a new neighborhood…</option>`;
+}
+
 function hoursBlockHtml(b, idx) {
   const days = b?.days || [];
   return `
@@ -1548,6 +1762,7 @@ function renderForm() {
   const blocks = schedules.map((s,i) => scheduleBlockHtml(s, i)).join("");
   const hoursData = d ? getHoursBlocks(d) : [];
   const hoursBlocks = hoursData.map((b,i) => hoursBlockHtml(b, i)).join("");
+  const initialCity = d ? getCity(d) : (localStorage.getItem("tab-last-city") || "Savannah, GA");
   return `
     <div class="modal-overlay" id="form-overlay">
       <form class="ticket" id="deal-form" style="max-width:520px;width:100%;padding:26px 24px 20px;margin-top:10px;">
@@ -1559,21 +1774,22 @@ function renderForm() {
             <p id="dup-warning" class="field-hint" style="color:var(--rust);display:none;"></p>
           </div>
           <div>
+            <label class="field-label">City</label>
+            <input class="field-input" name="city" id="city-input" list="known-cities" value="${esc(initialCity)}" placeholder="e.g. Savannah, GA" />
+            <datalist id="known-cities">
+              ${[...new Set(state.deals.map(getCity).filter(Boolean))].sort().map(c => `<option value="${esc(c)}"></option>`).join("")}
+            </datalist>
+            <p class="field-hint">Lets you filter the tab by city once you're tracking more than one.</p>
+          </div>
+          <div>
             <label class="field-label">Neighborhood / area (optional)</label>
-            <input class="field-input" name="neighborhood" value="${esc(d?.neighborhood||"")}" placeholder="e.g. Starland District" />
+            <select class="field-input" id="neighborhood-select">${neighborhoodOptionsHtml(initialCity, d?.neighborhood || "")}</select>
+            <input class="field-input" id="neighborhood-new" style="display:none;margin-top:8px;" placeholder="New neighborhood name" />
           </div>
           <div>
             <label class="field-label">Street address (optional)</label>
             <input class="field-input" name="address" value="${esc(d?.address||"")}" placeholder="e.g. 1801 Habersham St, Savannah, GA" />
             <p class="field-hint">Used to place this deal on the map. Skip it and it just won't show there.</p>
-          </div>
-          <div>
-            <label class="field-label">City</label>
-            <input class="field-input" name="city" list="known-cities" value="${esc(d ? getCity(d) : (localStorage.getItem("tab-last-city") || "Savannah, GA"))}" placeholder="e.g. Savannah, GA" />
-            <datalist id="known-cities">
-              ${[...new Set(state.deals.map(getCity).filter(Boolean))].sort().map(c => `<option value="${esc(c)}"></option>`).join("")}
-            </datalist>
-            <p class="field-hint">Lets you filter the tab by city once you're tracking more than one.</p>
           </div>
 
           <div>
@@ -1652,6 +1868,38 @@ function renderAbout() {
     </div>`;
 }
 
+function renderManageNeighborhoods() {
+  const cities = Object.keys(state.neighborhoodsByCity).sort();
+  const activeCity = state.manageCity && cities.includes(state.manageCity) ? state.manageCity : (cities[0] || "Savannah, GA");
+  const names = state.neighborhoodsByCity[activeCity] || [];
+  return `
+    <div class="modal-overlay" id="manage-hoods-overlay">
+      <div class="ticket" style="max-width:480px;width:100%;padding:26px 24px 20px;margin-top:10px;max-height:80vh;overflow-y:auto;">
+        <h2 class="display" style="font-size:22px;font-weight:700;margin:0 0 6px;">Manage Neighborhoods</h2>
+        <p style="font-size:13px;opacity:.75;margin:0 0 14px;">These populate the neighborhood dropdown when adding or editing a deal. Changes apply for everyone.</p>
+        ${cities.length > 1 ? `
+        <select id="manage-city-select" class="field-input" style="margin-bottom:14px;">
+          ${cities.map(c => `<option value="${esc(c)}" ${c===activeCity?'selected':''}>${esc(c)}</option>`).join("")}
+        </select>` : `<p class="field-label" style="margin-bottom:10px;">${esc(activeCity)}</p>`}
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:14px;">
+          ${names.length ? names.map(n => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid rgba(32,28,20,0.15);border-radius:6px;padding:6px 10px;">
+              <span style="font-size:13px;">${esc(n)}</span>
+              <button type="button" class="icon-btn danger" data-remove-hood="${esc(n)}">Remove</button>
+            </div>`).join("") : `<p class="mono" style="font-size:12px;opacity:.6;">No neighborhoods yet for this city.</p>`}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input class="field-input" id="new-hood-input" placeholder="Add a neighborhood…" />
+          <button type="button" class="btn-primary" id="add-hood-btn">Add</button>
+        </div>
+        <div class="tear-divider"></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button type="button" class="btn-primary" id="manage-hoods-close">Done</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderConfirm() {
   const deal = state.deals.find(d => d.id === state.confirmDeleteId);
   return `
@@ -1723,6 +1971,37 @@ function bindEvents() {
   if (emptyAddBtn) emptyAddBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
   const aboutLink = document.getElementById("about-link");
   if (aboutLink) aboutLink.onclick = () => { state.showAbout = true; render(); };
+  const manageHoodsLink = document.getElementById("manage-hoods-link");
+  if (manageHoodsLink) manageHoodsLink.onclick = () => {
+    const known = Object.keys(state.neighborhoodsByCity);
+    state.manageCity = (state.cityFilter !== "all" && known.includes(state.cityFilter)) ? state.cityFilter : (known[0] || "Savannah, GA");
+    state.showManageNeighborhoods = true;
+    render();
+  };
+
+  const manageOverlay = document.getElementById("manage-hoods-overlay");
+  if (manageOverlay) {
+    manageOverlay.onclick = (e) => { if (e.target === manageOverlay) { state.showManageNeighborhoods = false; render(); } };
+    document.getElementById("manage-hoods-close").onclick = () => { state.showManageNeighborhoods = false; render(); };
+    const manageCitySelect = document.getElementById("manage-city-select");
+    if (manageCitySelect) manageCitySelect.onchange = (e) => { state.manageCity = e.target.value; render(); };
+    document.querySelectorAll("[data-remove-hood]").forEach(btn => {
+      btn.onclick = async () => { await removeNeighborhood(state.manageCity, btn.dataset.removeHood); };
+    });
+    const addHoodBtn = document.getElementById("add-hood-btn");
+    const newHoodInput = document.getElementById("new-hood-input");
+    if (addHoodBtn && newHoodInput) {
+      const submitNewHood = async () => {
+        const name = newHoodInput.value.trim();
+        if (!name) return;
+        addHoodBtn.disabled = true;
+        await addNeighborhood(state.manageCity, name);
+        addHoodBtn.disabled = false;
+      };
+      addHoodBtn.onclick = submitNewHood;
+      newHoodInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); submitNewHood(); } };
+    }
+  }
 
   document.querySelectorAll("[data-edit]").forEach(btn => {
     btn.onclick = () => {
@@ -1767,6 +2046,26 @@ function bindEvents() {
           }
         }
       };
+    }
+
+    const cityInput = document.getElementById("city-input");
+    const neighborhoodSelect = document.getElementById("neighborhood-select");
+    const neighborhoodNew = document.getElementById("neighborhood-new");
+    if (cityInput && neighborhoodSelect) {
+      cityInput.addEventListener("input", () => {
+        const cur = neighborhoodSelect.value === "__new__" ? "" : neighborhoodSelect.value;
+        neighborhoodSelect.innerHTML = neighborhoodOptionsHtml(cityInput.value.trim(), cur);
+      });
+    }
+    if (neighborhoodSelect && neighborhoodNew) {
+      neighborhoodSelect.addEventListener("change", () => {
+        if (neighborhoodSelect.value === "__new__") {
+          neighborhoodNew.style.display = "block";
+          neighborhoodNew.focus();
+        } else {
+          neighborhoodNew.style.display = "none";
+        }
+      });
     }
 
     form.addEventListener("click", (e) => {
@@ -1850,14 +2149,19 @@ function bindEvents() {
       submitBtn.disabled = true;
       const address = f.address.value.trim();
       const city = f.city.value.trim();
+      let neighborhood = f.querySelector("#neighborhood-select")?.value || "";
+      if (neighborhood === "__new__") {
+        neighborhood = f.querySelector("#neighborhood-new")?.value.trim() || "";
+      }
       submitBtn.textContent = address ? "Finding it on the map…" : "Saving…";
       let coords = null;
       if (address) coords = await geocodeAddress(address);
       if (addedBy !== state.myName) saveName(addedBy);
       if (city) localStorage.setItem("tab-last-city", city);
+      if (neighborhood && city) addNeighborhood(city, neighborhood); // fire-and-forget
 
       const data = {
-        venue, neighborhood: f.neighborhood.value.trim(), address, city,
+        venue, neighborhood, address, city,
         hoursBlocks,
         schedules,
         notes: f.notes.value.trim(), addedBy,
