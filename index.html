@@ -891,13 +891,31 @@ function getHoursBlocks(deal) {
   }
   return [];
 }
+// Collapses a set of day indices into contiguous ranges, e.g. [1,2,3,4,5] -> [{start:1,end:5}]
+function dayRanges(days) {
+  if (!days || !days.length) return [];
+  const sorted = [...new Set(days)].sort((a, b) => a - b);
+  const ranges = [];
+  let start = sorted[0], prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const cur = sorted[i];
+    if (cur === prev + 1) { prev = cur; continue; }
+    ranges.push({ start, end: prev });
+    start = cur; prev = cur;
+  }
+  return ranges;
+}
+function formatDayRange(days) {
+  const ranges = dayRanges(days);
+  if (!ranges.length) return "";
+  if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === 6) return "Daily";
+  return ranges.map(r => r.start === r.end ? DAYS[r.start] : `${DAYS[r.start]}–${DAYS[r.end]}`).join(", ");
+}
+
 function summarizeHours(deal) {
   const blocks = getHoursBlocks(deal);
   if (!blocks.length) return "";
-  return blocks.map(b => {
-    const days = DAYS.filter((_, i) => (b.days || []).includes(i)).join(",");
-    return `${days} ${fmtTime(b.startTime)}–${fmtTime(b.endTime)}`;
-  }).join(" · ");
+  return blocks.map(b => `${formatDayRange(b.days)} ${fmtTime(b.startTime)}–${fmtTime(b.endTime)}`).join(" · ");
 }
 function isOpenNow(deal) {
   const blocks = getHoursBlocks(deal);
@@ -1055,6 +1073,24 @@ async function geocodeAddress(address) {
     console.error("Geocoding failed:", e);
   }
   return null;
+}
+async function retryGeocode(id) {
+  const deal = state.deals.find(d => d.id === id);
+  if (!deal || !deal.address) return;
+  const btn = document.querySelector(`[data-retrygeo="${id}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = "Locating…"; }
+  const coords = await geocodeAddress(deal.address);
+  if (coords) {
+    try {
+      await db.collection("deals").doc(id).update({ lat: coords.lat, lng: coords.lng, updatedAt: Date.now() });
+      state.error = null;
+    } catch (e) {
+      state.error = "Found the location but couldn't save it — try again.";
+    }
+  } else {
+    state.error = `Couldn't find "${deal.address}" on a map. Try editing it to be more specific (street, city, and state).`;
+  }
+  render();
 }
 
 // ---- Firestore live sync ----
@@ -1277,10 +1313,7 @@ function renderMapView(list) {
 }
 
 function summarizeSchedules(deal) {
-  return getSchedules(deal).map(s => {
-    const days = DAYS.filter((_,i)=>(s.days||[]).includes(i)).join(",");
-    return `${days} ${fmtTime(s.startTime)}–${fmtTime(s.endTime)}`;
-  }).join(" · ");
+  return getSchedules(deal).map(s => `${formatDayRange(s.days)} ${fmtTime(s.startTime)}–${fmtTime(s.endTime)}`).join(" · ");
 }
 
 function initMap(list) {
@@ -1390,10 +1423,16 @@ function renderDealsOrEmpty(list) {
 
 function scheduleHtml(s, today, filterDay) {
   const drinks = s.drinks || [], food = s.food || [];
+  const dayChips = dayRanges(s.days || []).map(r => {
+    const label = r.start === r.end ? DAYS[r.start] : `${DAYS[r.start]}–${DAYS[r.end]}`;
+    const includesToday = today >= r.start && today <= r.end;
+    const includesFilter = filterDay >= 0 && filterDay >= r.start && filterDay <= r.end;
+    return `<span class="day-tag ${includesToday?'today':''} ${includesFilter?'filter-selected':''}">${label}</span>`;
+  }).join("");
   return `
     <div style="margin-top:10px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${DAYS.map((d,i)=> (s.days||[]).includes(i) ? `<span class="day-tag ${i===today?'today':''} ${i===filterDay?'filter-selected':''}">${d}</span>` : "").join("")}
+        ${dayChips}
         <span class="mono" style="font-size:12px;align-self:center;margin-left:4px;opacity:.75;">${fmtTime(s.startTime)} – ${fmtTime(s.endTime)}</span>
       </div>
       ${(drinks.length || food.length) ? `
@@ -1447,7 +1486,9 @@ function dealCardHtml(deal) {
         <p class="mono" style="font-size:11px;opacity:.55;margin:0;">added by ${esc(deal.addedBy || "someone")}${deal.updatedAt ? ` · verified ${fmtRelativeTime(deal.updatedAt)}` : ""}</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="icon-btn" data-share="${deal.id}">Share</button>
-          ${typeof deal.lat === "number" ? `<button class="icon-btn" data-viewmap="${deal.id}">View on map</button>` : ""}
+          ${typeof deal.lat === "number"
+            ? `<button class="icon-btn" data-viewmap="${deal.id}">View on map</button>`
+            : (deal.address ? `<button class="icon-btn" data-retrygeo="${deal.id}">📍 Place on map</button>` : "")}
           <button class="icon-btn" data-edit="${deal.id}">Edit</button>
           <button class="icon-btn danger" data-delete="${deal.id}">Delete</button>
         </div>
@@ -1504,7 +1545,7 @@ function hoursBlockHtml(b, idx) {
 function renderForm() {
   const d = state.editingDeal;
   const schedules = d ? getSchedules(d) : [];
-  const blocks = (schedules.length ? schedules : [null]).map((s,i) => scheduleBlockHtml(s, i)).join("");
+  const blocks = schedules.map((s,i) => scheduleBlockHtml(s, i)).join("");
   const hoursData = d ? getHoursBlocks(d) : [];
   const hoursBlocks = hoursData.map((b,i) => hoursBlockHtml(b, i)).join("");
   return `
@@ -1542,9 +1583,13 @@ function renderForm() {
             <button type="button" class="btn-ghost" id="add-hours-btn">+ Add open hours</button>
           </div>
 
-          <div id="schedules-container">${blocks}</div>
-          <button type="button" class="btn-ghost" id="add-schedule-btn">+ Add another day/time</button>
-          <p class="field-hint" style="margin-top:-8px;">Use separate blocks if the deal is different on different days (e.g. Mon–Thu vs. Fri).</p>
+          <div>
+            <label class="field-label">Happy hour info (optional)</label>
+            <p class="field-hint" style="margin:0 0 8px;">Skip this if you just want to drop a pin for now — you can add the deal later.</p>
+            <div id="schedules-container">${blocks}</div>
+            <button type="button" class="btn-ghost" id="add-schedule-btn">+ Add another day/time</button>
+            <p class="field-hint" style="margin-top:8px;">Use separate blocks if the deal is different on different days (e.g. Mon–Thu vs. Fri).</p>
+          </div>
 
           <div style="display:flex;align-items:center;gap:8px;">
             <input type="checkbox" id="cashOnly" name="cashOnly" ${d?.cashOnly ? "checked" : ""} style="width:16px;height:16px;" />
@@ -1691,6 +1736,9 @@ function bindEvents() {
   document.querySelectorAll("[data-viewmap]").forEach(btn => {
     btn.onclick = () => goToMap(btn.dataset.viewmap);
   });
+  document.querySelectorAll("[data-retrygeo]").forEach(btn => {
+    btn.onclick = () => retryGeocode(btn.dataset.retrygeo);
+  });
   document.querySelectorAll("[data-fav]").forEach(btn => {
     btn.onclick = () => toggleFavorite(btn.dataset.fav);
   });
@@ -1732,8 +1780,7 @@ function bindEvents() {
         e.target.classList.toggle("selected");
       }
       if (e.target.classList.contains("remove-schedule")) {
-        const blocks = form.querySelectorAll(".schedule-block");
-        if (blocks.length > 1) e.target.closest(".schedule-block").remove();
+        e.target.closest(".schedule-block").remove();
       }
       if (e.target.matches("[data-hday]")) {
         const block = e.target.closest(".hours-block");
@@ -1793,8 +1840,8 @@ function bindEvents() {
         });
       });
 
-      if (!venue || !schedules.length || !addedBy) {
-        errEl.textContent = "Venue, at least one day/time block with a day selected, and your name are required.";
+      if (!venue || !addedBy) {
+        errEl.textContent = "Venue name and your name are required.";
         errEl.style.display = "block";
         return;
       }
@@ -1821,6 +1868,9 @@ function bindEvents() {
       };
       if (coords) { data.lat = coords.lat; data.lng = coords.lng; }
       submitBtn.textContent = "Saving…";
+      if (address && !coords) {
+        state.error = `Saved, but couldn't find "${address}" on a map — it won't show a pin yet. Try the "Place on map" button on its card, or double-check the address.`;
+      }
       if (state.editingDeal) await updateDeal(state.editingDeal.id, data);
       else await addDeal(data);
     };
