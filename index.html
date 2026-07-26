@@ -4,7 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Sav Happy Hour</title>
-<link rel="manifest" href="data:application/json,{%22name%22:%22Sav%20Happy%20Hour%22,%22short_name%22:%22Sav%20Happy%20Hour%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22,%22background_color%22:%22%230f231f%22,%22theme_color%22:%22%230f231f%22}">
+
+<!-- Happy beer icon, used as favicon / home-screen icon everywhere below -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%230f231f'/%3E%3Crect x='27' y='38' width='36' height='38' rx='5' fill='%23e0bc46' stroke='%23201c14' stroke-width='2.5'/%3E%3Cpath d='M63 46 h7 a8 8 0 0 1 0 16 h-7' fill='none' stroke='%23201c14' stroke-width='3.5'/%3E%3Cpath d='M25 39 q3 -12 10 -5 q4 -9 11 1 q4 -10 11 1 q4 -8 9 3 q2 5 -3 7 h-36 q-4 -2 -2 -7 z' fill='%23fffdf7' stroke='%23201c14' stroke-width='2'/%3E%3Ccircle cx='38' cy='58' r='2.8' fill='%23201c14'/%3E%3Ccircle cx='53' cy='58' r='2.8' fill='%23201c14'/%3E%3Ccircle cx='33' cy='63' r='2.6' fill='%23a64b2a' opacity='0.55'/%3E%3Ccircle cx='58' cy='63' r='2.6' fill='%23a64b2a' opacity='0.55'/%3E%3Cpath d='M36 66 q10 9 20 0' fill='none' stroke='%23201c14' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f231f'/%3E%3Crect x='27' y='38' width='36' height='38' rx='5' fill='%23e0bc46' stroke='%23201c14' stroke-width='2.5'/%3E%3Cpath d='M63 46 h7 a8 8 0 0 1 0 16 h-7' fill='none' stroke='%23201c14' stroke-width='3.5'/%3E%3Cpath d='M25 39 q3 -12 10 -5 q4 -9 11 1 q4 -10 11 1 q4 -8 9 3 q2 5 -3 7 h-36 q-4 -2 -2 -7 z' fill='%23fffdf7' stroke='%23201c14' stroke-width='2'/%3E%3Ccircle cx='38' cy='58' r='2.8' fill='%23201c14'/%3E%3Ccircle cx='53' cy='58' r='2.8' fill='%23201c14'/%3E%3Ccircle cx='33' cy='63' r='2.6' fill='%23a64b2a' opacity='0.55'/%3E%3Ccircle cx='58' cy='63' r='2.6' fill='%23a64b2a' opacity='0.55'/%3E%3Cpath d='M36 66 q10 9 20 0' fill='none' stroke='%23201c14' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<!-- Install-as-app support: manifest href is generated safely in the script below -->
+<link rel="manifest" id="manifest-link">
+<meta name="theme-color" content="#0f231f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sav Happy Hour">
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -146,6 +158,51 @@ const db = firebase.firestore();
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const SAVANNAH_CENTER = [32.0809, -81.0912];
 
+// Happy beer mug icon — single source of truth for the favicon, home-screen icon, and header logo.
+const BEER_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style="display:block;">
+  <circle cx="50" cy="50" r="48" fill="#0f231f"/>
+  <rect x="27" y="38" width="36" height="38" rx="5" fill="#e0bc46" stroke="#201c14" stroke-width="2.5"/>
+  <path d="M63 46 h7 a8 8 0 0 1 0 16 h-7" fill="none" stroke="#201c14" stroke-width="3.5"/>
+  <path d="M25 39 q3 -12 10 -5 q4 -9 11 1 q4 -10 11 1 q4 -8 9 3 q2 5 -3 7 h-36 q-4 -2 -2 -7 z" fill="#fffdf7" stroke="#201c14" stroke-width="2"/>
+  <circle cx="38" cy="58" r="2.8" fill="#201c14"/>
+  <circle cx="53" cy="58" r="2.8" fill="#201c14"/>
+  <circle cx="33" cy="63" r="2.6" fill="#a64b2a" opacity="0.55"/>
+  <circle cx="58" cy="63" r="2.6" fill="#a64b2a" opacity="0.55"/>
+  <path d="M36 66 q10 9 20 0" fill="none" stroke="#201c14" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
+const BEER_ICON_DATA_URL = "data:image/svg+xml," + encodeURIComponent(BEER_ICON_SVG);
+
+// Install-as-app setup: build the manifest safely (avoids hand-encoding mistakes) and
+// register a minimal service worker, matching what the other single-file apps use.
+(function setupInstallability() {
+  const manifest = {
+    name: "Sav Happy Hour",
+    short_name: "Sav Happy Hour",
+    display: "standalone",
+    start_url: ".",
+    background_color: "#0f231f",
+    theme_color: "#0f231f",
+    icons: [
+      { src: BEER_ICON_DATA_URL, sizes: "any", type: "image/svg+xml", purpose: "any" },
+      { src: BEER_ICON_DATA_URL, sizes: "any", type: "image/svg+xml", purpose: "maskable" }
+    ]
+  };
+  const manifestLink = document.getElementById("manifest-link");
+  if (manifestLink) {
+    manifestLink.href = "data:application/json," + encodeURIComponent(JSON.stringify(manifest));
+  }
+
+  if ("serviceWorker" in navigator) {
+    const swCode = `
+      self.addEventListener("install", () => self.skipWaiting());
+      self.addEventListener("activate", () => self.clients.claim());
+      self.addEventListener("fetch", () => {}); // presence alone satisfies install criteria
+    `;
+    const swBlob = new Blob([swCode], { type: "application/javascript" });
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+  }
+})();
+
 // Real, currently-published starting deals for Savannah, GA (as of this writing —
 // happy hour menus change often, so double check and edit these once you've added them).
 const SAVANNAH_STARTER_DEALS = [
@@ -158,9 +215,12 @@ const SAVANNAH_STARTER_DEALS = [
     schedules: [
       { days: [0,1,2,3,4,5,6], startTime: "15:00", endTime: "18:00",
         drinks: ["$3 off craft cocktails & wine by the glass", "$2 off bottled/canned beer, seltzers & ciders", "$6 wells"],
+        food: ["$2 off small plates"] },
+      { days: [0,1,2,3,4,5,6], startTime: "21:00", endTime: "22:00",
+        drinks: ["$3 off craft cocktails & wine by the glass", "$2 off bottled/canned beer, seltzers & ciders", "$6 wells"],
         food: ["$2 off small plates"] }
     ],
-    notes: "Runs twice daily — same specials repeat 9–10pm.",
+    notes: "",
     addedBy: "Will G."
   },
   {
@@ -301,6 +361,11 @@ const SAVANNAH_STARTER_DEALS = [
     instagram: "https://www.instagram.com/socialclubcongress/",
     facebook: "https://www.facebook.com/CongressStreetSocialCLub/",
     schedules: [
+      { days: [1], startTime: "15:00", endTime: "03:00",
+        drinks: ["Monday Bourbon — $7 single barrel picks: Buffalo Trace, Elijah Craig, Knob Creek, Knob Creek Rye, Old Forester Barrel Strength, Old Pepper Rye, Savannah Founders Reserve, WhistlePig 10 Rye, Woodford Reserve",
+                 "$4 select bourbons: 1792, Benchmark, Four Roses, Henry McKenna, Jim Beam, Larceny Small Batch, Old Dominick & Toddy, Old Forester 86, Savannah 88, Wild Turkey 101",
+                 "$4 Georgia beer: Social Lite, ATL Cider Company, Creature Comforts, Peach State Light (draft), Scofflaw, Service, Southbound, Sweetwater, Terrapin, Three Taverns, Wild Heaven (draft), Wild Leap"],
+        food: [] },
       { days: [2], startTime: "15:00", endTime: "03:00",
         drinks: ["Tijuana Tuesday — $4 cerveza: Imperial, Tecate, Pacifico, Modelo, Corona Premier, Dos XX (draft)",
                  "$4 tequila: Altos, Teremana, Hornitos, Siempre Blanco, El Jimador",
@@ -313,11 +378,6 @@ const SAVANNAH_STARTER_DEALS = [
                  "$5 American: George Dickel 8 & 12, Old Dominick, Jack Daniels Old No. 7",
                  "$5 Rye: George Dickel, Knob Creek Single Barrel, Old Pepper Single Barrel, Restoration, Rittenhouse, WhistlePig Piggyback",
                  "$5 Flavored: Jack Daniels (Fire, Honey, Apple), Screwball, Old Dominick Toddy"],
-        food: [] },
-      { days: [1], startTime: "15:00", endTime: "03:00",
-        drinks: ["Monday Bourbon — $7 single barrel picks: Buffalo Trace, Elijah Craig, Knob Creek, Knob Creek Rye, Old Forester Barrel Strength, Old Pepper Rye, Savannah Founders Reserve, WhistlePig 10 Rye, Woodford Reserve",
-                 "$4 select bourbons: 1792, Benchmark, Four Roses, Henry McKenna, Jim Beam, Larceny Small Batch, Old Dominick & Toddy, Old Forester 86, Savannah 88, Wild Turkey 101",
-                 "$4 Georgia beer: Social Lite, ATL Cider Company, Creature Comforts, Peach State Light (draft), Scofflaw, Service, Southbound, Sweetwater, Terrapin, Three Taverns, Wild Heaven (draft), Wild Leap"],
         food: [] }
     ],
     notes: "These run all day (bar opens 3pm Mon–Thu). From their Instagram @socialclubcongress.",
@@ -525,6 +585,30 @@ const SAVANNAH_STARTER_DEALS = [
   }
 ];
 
+const CHANGELOG = [
+  { date: "Latest", items: [
+    "Added an About panel (this one) with app info and update history.",
+    "Different-day deals at one venue now display in day-of-week order.",
+    "Listings are sorted alphabetically by venue name instead of by time.",
+    "Ardsley Station's second daily happy hour (9–10pm) is now a real schedule block, not just a note.",
+    "\"Sync Savannah starters\" now updates venues you've already loaded instead of skipping them — safe to run any time the starter list changes.",
+  ]},
+  { date: "Earlier", items: [
+    "Added full operating hours as a field separate from happy hour times.",
+    "Added a cash-only badge for venues that don't take cards.",
+    "Expanded the Savannah starter pack to 32 real venues with verified addresses.",
+    "Added website, Instagram, and Facebook links to listings.",
+    "Map pins now link back to their listing, and listings link out to the map.",
+    "Added support for multiple day/time blocks per venue (e.g. different specials on different nights).",
+  ]},
+  { date: "Original build", items: [
+    "Shared, live-synced happy hour tracker for the group — add, edit, delete deals in real time.",
+    "Map view with geocoded pins.",
+    "Live \"pouring now\" detection and day-of-week filtering.",
+  ]},
+];
+
+
 const state = {
   deals: [],
   loading: true,
@@ -538,6 +622,12 @@ const state = {
   editingDeal: null,
   confirmDeleteId: null,
   focusDealId: null,
+  showAbout: false,
+  search: "",
+  myLocation: null,
+  locating: false,
+  sortNear: false,
+  focusUserLocation: false,
 };
 
 let leafletMapInstance = null;
@@ -557,11 +647,18 @@ function fmtTime(hhmm) {
 // Backward-compatible accessor: deals saved before multi-schedule support
 // had flat days/startTime/endTime/drinks/food. Wrap those as a single schedule.
 function getSchedules(deal) {
-  if (deal.schedules && deal.schedules.length) return deal.schedules;
-  if (deal.days && deal.startTime && deal.endTime) {
-    return [{ days: deal.days, startTime: deal.startTime, endTime: deal.endTime, drinks: deal.drinks || [], food: deal.food || [] }];
+  let schedules;
+  if (deal.schedules && deal.schedules.length) schedules = deal.schedules;
+  else if (deal.days && deal.startTime && deal.endTime) {
+    schedules = [{ days: deal.days, startTime: deal.startTime, endTime: deal.endTime, drinks: deal.drinks || [], food: deal.food || [] }];
+  } else {
+    schedules = [];
   }
-  return [];
+  return [...schedules].sort((a, b) => {
+    const aMin = a.days && a.days.length ? Math.min(...a.days) : 99;
+    const bMin = b.days && b.days.length ? Math.min(...b.days) : 99;
+    return aMin - bMin;
+  });
 }
 
 function scheduleActive(schedule, now) {
@@ -607,6 +704,70 @@ function normalizeUrl(url) {
   if (!url) return "";
   if (!/^https?:\/\//i.test(url)) url = "https://" + url;
   return url;
+}
+
+function distanceMiles(lat1, lng1, lat2, lng2) {
+  const R = 3958.8; // Earth radius in miles
+  const toRad = (deg) => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function fmtDistance(mi) {
+  if (mi < 0.1) return "very close";
+  return `${mi.toFixed(mi < 10 ? 1 : 0)} mi away`;
+}
+function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error("Geolocation isn't available in this browser.")); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
+}
+function locationErrorMessage(e) {
+  if (e && e.code === 1) return "Location access was denied — enable it in your browser's site settings to use this.";
+  if (e && e.code === 2) return "Couldn't determine your location right now. Try again in a moment.";
+  if (e && e.code === 3) return "Location request timed out. Try again.";
+  return (e && e.message) ? e.message : "Couldn't get your location.";
+}
+function dealMatchesSearch(deal, q) {
+  const haystack = [deal.venue, deal.neighborhood, deal.notes];
+  getSchedules(deal).forEach(s => { haystack.push(...(s.drinks||[]), ...(s.food||[])); });
+  return haystack.some(h => (h || "").toLowerCase().includes(q));
+}
+
+async function toggleNearMe() {
+  if (state.sortNear) { state.sortNear = false; render(); return; }
+  if (state.myLocation) { state.sortNear = true; render(); return; }
+  state.locating = true;
+  render();
+  try {
+    state.myLocation = await getUserLocation();
+    state.sortNear = true;
+    state.error = null;
+  } catch (e) {
+    state.error = locationErrorMessage(e);
+  } finally {
+    state.locating = false;
+    render();
+  }
+}
+async function locateOnMap() {
+  state.locating = true;
+  render();
+  try {
+    state.myLocation = await getUserLocation();
+    state.focusUserLocation = true;
+    state.error = null;
+  } catch (e) {
+    state.error = locationErrorMessage(e);
+  } finally {
+    state.locating = false;
+    render();
+  }
 }
 
 async function geocodeAddress(address) {
@@ -670,17 +831,24 @@ async function deleteDeal(id) {
 }
 async function seedStarterDeals() {
   const btn = document.getElementById("seed-btn") || document.getElementById("seed-link");
-  if (btn) { btn.disabled = true; btn.textContent = "Loading starter deals…"; }
-  const existingNames = new Set(state.deals.map(d => (d.venue || "").trim().toLowerCase()));
+  if (btn) { btn.disabled = true; btn.textContent = "Syncing Savannah starters…"; }
+  const existingByName = new Map(
+    state.deals.map(d => [(d.venue || "").trim().toLowerCase(), d.id])
+  );
   for (const deal of SAVANNAH_STARTER_DEALS) {
-    if (existingNames.has(deal.venue.trim().toLowerCase())) continue; // already on the tab
+    const key = deal.venue.trim().toLowerCase();
     try {
       const coords = await geocodeAddress(deal.address);
-      const payload = { ...deal, createdAt: Date.now(), updatedAt: Date.now() };
+      const payload = { ...deal };
       if (coords) { payload.lat = coords.lat; payload.lng = coords.lng; }
-      await db.collection("deals").add(payload);
+      const existingId = existingByName.get(key);
+      if (existingId) {
+        await db.collection("deals").doc(existingId).update({ ...payload, updatedAt: Date.now() });
+      } else {
+        await db.collection("deals").add({ ...payload, createdAt: Date.now(), updatedAt: Date.now() });
+      }
     } catch (e) {
-      console.error("Seed failed for", deal.venue, e);
+      console.error("Sync failed for", deal.venue, e);
     }
     await new Promise(r => setTimeout(r, 1100)); // be polite to the free geocoding service
   }
@@ -734,11 +902,18 @@ function getVisibleDeals() {
   let list = [...state.deals];
   if (state.filter === "live") list = list.filter(d => isActiveNow(d, state.now));
   else if (typeof state.filter === "number") list = list.filter(d => dealMatchesDay(d, state.filter));
-  list.sort((a,b) => {
-    const aActive = isActiveNow(a, state.now), bActive = isActiveNow(b, state.now);
-    if (aActive !== bActive) return aActive ? -1 : 1;
-    return nextOccurrence(a, state.now) - nextOccurrence(b, state.now);
-  });
+  const q = state.search.trim().toLowerCase();
+  if (q) list = list.filter(d => dealMatchesSearch(d, q));
+  if (state.sortNear && state.myLocation) {
+    const loc = state.myLocation;
+    list.sort((a, b) => {
+      const da = (typeof a.lat === "number") ? distanceMiles(loc.lat, loc.lng, a.lat, a.lng) : Infinity;
+      const db = (typeof b.lat === "number") ? distanceMiles(loc.lat, loc.lng, b.lat, b.lng) : Infinity;
+      return da - db;
+    });
+  } else {
+    list.sort((a, b) => (a.venue || "").localeCompare(b.venue || "", undefined, { sensitivity: "base" }));
+  }
   return list;
 }
 
@@ -746,19 +921,31 @@ function render() {
   const app = document.getElementById("app");
   const visibleDeals = getVisibleDeals();
 
+  // Preserve focus/cursor on the search box across re-renders (this rebuilds the whole DOM)
+  const active = document.activeElement;
+  const wasSearchFocused = active && active.id === "search-input";
+  const selStart = wasSearchFocused ? active.selectionStart : null;
+  const selEnd = wasSearchFocused ? active.selectionEnd : null;
+
   app.innerHTML = `
     <header class="header-bar">
       <div class="header-inner">
         <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <div>
-            <h1 class="display" style="font-size:26px;font-weight:700;margin:0;color:var(--gold-bright);">Sav Happy Hour</h1>
-            <p class="mono" id="clock-text" style="font-size:12px;margin:2px 0 0;color:rgba(239,231,216,0.65);">${clockLabel()}</p>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;flex-shrink:0;">${BEER_ICON_SVG}</div>
+            <div>
+              <h1 class="display" style="font-size:26px;font-weight:700;margin:0;color:var(--gold-bright);">Sav Happy Hour</h1>
+              <p class="mono" id="clock-text" style="font-size:12px;margin:2px 0 0;color:rgba(239,231,216,0.65);">${clockLabel()}</p>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <div id="name-field"></div>
-            <button class="mono" id="seed-link" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">load Savannah starters</button>
+            <button class="mono" id="seed-link" title="Adds any new Savannah starter venues and updates ones you already have with the latest info" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">sync Savannah starters</button>
+            <button class="mono" id="about-link" style="background:transparent;border:none;color:rgba(239,231,216,0.5);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0;">about & updates</button>
           </div>
         </div>
+
+        <input type="text" id="search-input" class="field-input" style="background:rgba(255,255,255,0.95);margin-top:12px;" placeholder="Search venues, drinks, food…" value="${esc(state.search)}" />
 
         <div class="filter-row">
           <button class="filter-chip ${state.view==='list'?'active':''}" data-view="list">List</button>
@@ -767,28 +954,41 @@ function render() {
         <div class="filter-row">
           <button class="filter-chip ${state.filter==='live'?'active':''}" data-filter="live">Pouring now</button>
           <button class="filter-chip ${state.filter==='all'?'active':''}" data-filter="all">All deals</button>
+          <button class="filter-chip ${state.sortNear?'active':''}" id="near-me-chip">${state.locating ? "Locating…" : "Near me"}</button>
           ${DAYS.map((d,i)=>`<button class="filter-chip ${state.filter===i?'active':''}" data-filter="${i}">${d}</button>`).join("")}
         </div>
       </div>
     </header>
     <main>
       ${state.error ? `<div class="error-banner">${esc(state.error)}</div>` : ""}
-      ${state.loading ? `<p style="opacity:.7;text-align:center;margin-top:60px;">Loading the tab…</p>` : (state.view === 'map' ? renderMapView() : renderDealsOrEmpty(visibleDeals))}
+      ${state.loading ? `<p style="opacity:.7;text-align:center;margin-top:60px;">Loading the tab…</p>` : (state.view === 'map' ? renderMapView(visibleDeals) : renderDealsOrEmpty(visibleDeals))}
     </main>
     <button class="btn-primary fab" id="add-btn">+ Add deal</button>
     ${state.showForm ? renderForm() : ""}
     ${state.confirmDeleteId ? renderConfirm() : ""}
+    ${state.showAbout ? renderAbout() : ""}
   `;
 
   renderNameField();
   bindEvents();
-  if (!state.loading && state.view === 'map') initMap();
+  if (!state.loading && state.view === 'map') initMap(visibleDeals);
+
+  if (wasSearchFocused) {
+    const input = document.getElementById("search-input");
+    if (input) {
+      input.focus();
+      if (selStart !== null && input.setSelectionRange) input.setSelectionRange(selStart, selEnd);
+    }
+  }
 }
 
-function renderMapView() {
-  const missing = state.deals.filter(d => !(typeof d.lat === 'number' && typeof d.lng === 'number'));
+function renderMapView(list) {
+  const missing = list.filter(d => !(typeof d.lat === 'number' && typeof d.lng === 'number'));
   return `
-    <div id="map"></div>
+    <div style="position:relative;">
+      <div id="map"></div>
+      <button id="locate-btn" title="Find me" style="position:absolute;bottom:14px;right:14px;background:var(--cream);z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:50%;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;">${state.locating ? "⏳" : "📍"}</button>
+    </div>
     ${missing.length ? `<p class="mono" style="font-size:12px;opacity:.6;margin-top:10px;">${missing.length} deal${missing.length>1?'s':''} without an address won't show on the map yet — edit them to add one.</p>` : ""}
   `;
 }
@@ -800,7 +1000,7 @@ function summarizeSchedules(deal) {
   }).join(" · ");
 }
 
-function initMap() {
+function initMap(list) {
   const container = document.getElementById("map");
   if (!container || typeof L === "undefined") return;
   if (leafletMapInstance) { leafletMapInstance.remove(); leafletMapInstance = null; }
@@ -816,7 +1016,7 @@ function initMap() {
     mapState.zoom = leafletMapInstance.getZoom();
   });
 
-  const withCoords = state.deals.filter(d => typeof d.lat === "number" && typeof d.lng === "number");
+  const withCoords = (list || state.deals).filter(d => typeof d.lat === "number" && typeof d.lng === "number");
   const markersById = {};
   withCoords.forEach(d => {
     const active = isActiveNow(d, state.now);
@@ -836,7 +1036,18 @@ function initMap() {
     markersById[d.id] = marker;
   });
 
-  if (withCoords.length && !mapEverFit && !state.focusDealId) {
+  if (state.myLocation) {
+    const youIcon = L.divIcon({
+      className: "",
+      html: `<div style="background:#4285F4;border:3px solid white;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 6px rgba(66,133,244,0.28);"></div>`,
+      iconSize: [14,14], iconAnchor: [7,7]
+    });
+    L.marker([state.myLocation.lat, state.myLocation.lng], { icon: youIcon, zIndexOffset: 1000 })
+      .addTo(leafletMapInstance)
+      .bindPopup(`<div style="font-family:Inter,sans-serif;font-size:12px;">You are here</div>`);
+  }
+
+  if (withCoords.length && !mapEverFit && !state.focusDealId && !state.focusUserLocation) {
     leafletMapInstance.fitBounds(withCoords.map(d => [d.lat, d.lng]), { padding: [40,40], maxZoom: 15 });
     mapEverFit = true;
   }
@@ -848,6 +1059,11 @@ function initMap() {
       markersById[target.id]?.openPopup();
     }
     state.focusDealId = null;
+  }
+
+  if (state.focusUserLocation && state.myLocation) {
+    leafletMapInstance.setView([state.myLocation.lat, state.myLocation.lng], 15);
+    state.focusUserLocation = false;
   }
 }
 
@@ -893,12 +1109,15 @@ function dealCardHtml(deal) {
   const filterDay = typeof state.filter === "number" ? state.filter : -1;
   const schedules = getSchedules(deal);
   const hasLinks = deal.website || deal.instagram || deal.facebook;
+  const showDistance = state.sortNear && state.myLocation && typeof deal.lat === "number";
+  const distance = showDistance ? distanceMiles(state.myLocation.lat, state.myLocation.lng, deal.lat, deal.lng) : null;
   return `
     <div class="ticket" id="deal-${deal.id}" style="padding:22px 20px 18px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
         <div>
           <h2 class="display" style="font-size:22px;font-weight:700;margin:0;">${esc(deal.venue)}</h2>
           ${deal.neighborhood ? `<p class="mono" style="font-size:12px;margin:3px 0 0;opacity:.65;">${esc(deal.neighborhood)}</p>` : ""}
+          ${distance !== null ? `<p class="mono" style="font-size:11px;margin:3px 0 0;opacity:.7;color:var(--green);font-weight:600;">📍 ${fmtDistance(distance)}</p>` : ""}
           ${deal.hours ? `<p class="mono" style="font-size:11px;margin:4px 0 0;opacity:.6;">Open ${esc(deal.hours)}</p>` : ""}
           ${deal.cashOnly ? `<span class="cash-badge" style="margin-top:6px;">💵 CASH ONLY</span>` : ""}
         </div>
@@ -1021,6 +1240,32 @@ function renderForm() {
     </div>`;
 }
 
+function renderAbout() {
+  return `
+    <div class="modal-overlay" id="about-overlay">
+      <div class="ticket" style="max-width:480px;width:100%;padding:26px 24px 20px;margin-top:10px;max-height:80vh;overflow-y:auto;">
+        <h2 class="display" style="font-size:22px;font-weight:700;margin:0 0 6px;">About Sav Happy Hour</h2>
+        <p style="font-size:13px;opacity:.8;margin:0 0 16px;">
+          A shared, live-updating happy hour tracker built for the group. Anyone with the link can add, edit, or delete deals — changes show up for everyone right away. Use the Map view to browse by location, and filters up top to see what's pouring now or check a specific day.
+        </p>
+        <div class="tear-divider"></div>
+        <p class="field-label" style="margin-bottom:10px;">Updates</p>
+        ${CHANGELOG.map(group => `
+          <div style="margin-bottom:14px;">
+            <p class="mono" style="font-size:11px;font-weight:600;opacity:.6;margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em;">${esc(group.date)}</p>
+            <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;">
+              ${group.items.map(item => `<li>${esc(item)}</li>`).join("")}
+            </ul>
+          </div>
+        `).join("")}
+        <div class="tear-divider"></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn-primary" id="about-close">Close</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderConfirm() {
   const deal = state.deals.find(d => d.id === state.confirmDeleteId);
   return `
@@ -1066,6 +1311,13 @@ function bindEvents() {
     btn.onclick = () => { state.view = btn.dataset.view; render(); };
   });
 
+  const searchInput = document.getElementById("search-input");
+  if (searchInput) searchInput.oninput = (e) => { state.search = e.target.value; render(); };
+  const nearMeChip = document.getElementById("near-me-chip");
+  if (nearMeChip) nearMeChip.onclick = () => toggleNearMe();
+  const locateBtn = document.getElementById("locate-btn");
+  if (locateBtn) locateBtn.onclick = () => locateOnMap();
+
   const addBtn = document.getElementById("add-btn");
   if (addBtn) addBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
   const emptyAddBtn = document.getElementById("empty-add-btn");
@@ -1074,6 +1326,8 @@ function bindEvents() {
   if (seedBtn) seedBtn.onclick = () => seedStarterDeals();
   const seedLink = document.getElementById("seed-link");
   if (seedLink) seedLink.onclick = () => seedStarterDeals();
+  const aboutLink = document.getElementById("about-link");
+  if (aboutLink) aboutLink.onclick = () => { state.showAbout = true; render(); };
 
   document.querySelectorAll("[data-edit]").forEach(btn => {
     btn.onclick = () => {
@@ -1174,6 +1428,12 @@ function bindEvents() {
     confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) { state.confirmDeleteId = null; render(); } };
     document.getElementById("confirm-cancel").onclick = () => { state.confirmDeleteId = null; render(); };
     document.getElementById("confirm-remove").onclick = () => deleteDeal(state.confirmDeleteId);
+  }
+
+  const aboutOverlay = document.getElementById("about-overlay");
+  if (aboutOverlay) {
+    aboutOverlay.onclick = (e) => { if (e.target === aboutOverlay) { state.showAbout = false; render(); } };
+    document.getElementById("about-close").onclick = () => { state.showAbout = false; render(); };
   }
 }
 
