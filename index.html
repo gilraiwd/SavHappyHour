@@ -236,7 +236,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Water Witch Tiki",
     neighborhood: "Starland District",
     address: "2220 Bull St, Savannah, GA 31401",
-    hours: "Mon–Thu 5pm–12am · Fri 11am–1am (weekend hours vary, check socials)",
+    hoursBlocks: [
+      { days: [1,2,3,4], startTime: "17:00", endTime: "00:00" },
+      { days: [5], startTime: "11:00", endTime: "01:00" }
+    ],
     website: "https://www.waterwitchtiki.com",
     instagram: "https://www.instagram.com/waterwitchtiki/",
     facebook: "https://www.facebook.com/waterwitchtiki/",
@@ -244,14 +247,16 @@ const SAVANNAH_STARTER_DEALS = [
       { days: [1,2,3,4,5], startTime: "17:00", endTime: "19:00",
         drinks: ["$9 Daiquiri of the Moment", "Discounted tiki cocktails"], food: [] }
     ],
-    notes: "Full tiki bar vibe — can get a wait on weekends (no happy hour then).",
+    notes: "Full tiki bar vibe — can get a wait on weekends (no happy hour then). Weekend hours weren't confirmed, only Fri.",
     addedBy: "Will G."
   },
   {
     venue: "Cotton & Rye",
     neighborhood: "Starland District",
     address: "1801 Habersham St, Savannah, GA 31401",
-    hours: "Tue–Sat 5pm–10pm · Closed Sun & Mon",
+    hoursBlocks: [
+      { days: [2,3,4,5,6], startTime: "17:00", endTime: "22:00" }
+    ],
     website: "https://www.cottonandrye.com",
     instagram: "", facebook: "https://www.facebook.com/cotrye/",
     schedules: [
@@ -266,7 +271,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Brochu's Family Tradition — Sour Hour",
     neighborhood: "Baldwin Park",
     address: "2400 Bull St, Savannah, GA 31401",
-    hours: "Wed–Thu & Sun 5pm–9pm · Fri–Sat 5pm–10pm · Closed Mon–Tue",
+    hoursBlocks: [
+      { days: [3,4,0], startTime: "17:00", endTime: "21:00" },
+      { days: [5,6], startTime: "17:00", endTime: "22:00" }
+    ],
     website: "https://www.brochusfamilytradition.com",
     instagram: "", facebook: "",
     schedules: [
@@ -293,7 +301,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Treylor Park",
     neighborhood: "Historic District",
     address: "115 E Bay St, Savannah, GA 31401",
-    hours: "Mon–Fri 11am–1am · Sat–Sun 10am–1am",
+    hoursBlocks: [
+      { days: [1,2,3,4,5], startTime: "11:00", endTime: "01:00" },
+      { days: [6,0], startTime: "10:00", endTime: "01:00" }
+    ],
     website: "https://www.treylorpark.com/locations/treylor-park-savannah/",
     instagram: "", facebook: "",
     schedules: [
@@ -307,7 +318,9 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Common Restaurant",
     neighborhood: "Broughton St / Downtown",
     address: "118 E Broughton St, Savannah, GA 31401",
-    hours: "Daily 10am–10pm",
+    hoursBlocks: [
+      { days: [0,1,2,3,4,5,6], startTime: "10:00", endTime: "22:00" }
+    ],
     website: "https://www.commonrestaurant.com",
     instagram: "", facebook: "",
     schedules: [
@@ -321,7 +334,11 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "The Rail Pub",
     neighborhood: "Downtown / Historic District",
     address: "405 W Congress St, Savannah, GA 31401",
-    hours: "Mon–Wed 3pm–3am · Thu 1pm–3am · Fri–Sat 12pm–3am · Closed Sun",
+    hoursBlocks: [
+      { days: [1,2,3], startTime: "15:00", endTime: "03:00" },
+      { days: [4], startTime: "13:00", endTime: "03:00" },
+      { days: [5,6], startTime: "12:00", endTime: "03:00" }
+    ],
     website: "https://www.therailpub.com",
     instagram: "", facebook: "https://www.facebook.com/RailPub/",
     schedules: [
@@ -337,7 +354,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Zunzibar",
     neighborhood: "Historic District",
     address: "236 Drayton St, Savannah, GA 31401",
-    hours: "Mon–Wed & Sun 11am–11pm · Thu–Sat 11am–12am",
+    hoursBlocks: [
+      { days: [1,2,3,0], startTime: "11:00", endTime: "23:00" },
+      { days: [4,5,6], startTime: "11:00", endTime: "00:00" }
+    ],
     website: "https://www.zunzibar.com/locations/savannah-ga",
     instagram: "", facebook: "",
     schedules: [
@@ -351,7 +371,9 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Sorry Charlie's Oyster Bar",
     neighborhood: "Ellis Square / Downtown",
     address: "116 W Congress St, Savannah, GA 31401",
-    hours: "Daily 11am–12am",
+    hoursBlocks: [
+      { days: [0,1,2,3,4,5,6], startTime: "11:00", endTime: "00:00" }
+    ],
     website: "https://www.sorrycharlies.com",
     instagram: "", facebook: "",
     schedules: [
@@ -365,7 +387,11 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Congress Street Social Club",
     neighborhood: "Downtown / Historic District",
     address: "411 W Congress St, Savannah, GA 31401",
-    hours: "Mon–Thu 3pm–3am · Fri–Sat 12pm–3am · Sun 12pm–2am",
+    hoursBlocks: [
+      { days: [1,2,3,4], startTime: "15:00", endTime: "03:00" },
+      { days: [5,6], startTime: "12:00", endTime: "03:00" },
+      { days: [0], startTime: "12:00", endTime: "02:00" }
+    ],
     website: "https://congressstreetsocialclub.com",
     instagram: "https://www.instagram.com/socialclubcongress/",
     facebook: "https://www.facebook.com/CongressStreetSocialCLub/",
@@ -397,7 +423,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Artillery",
     neighborhood: "Historic District",
     address: "307 Bull St, Savannah, GA 31401",
-    hours: "Mon–Thu 4pm–11pm · Fri–Sat 4pm–12am · Closed Sun",
+    hoursBlocks: [
+      { days: [1,2,3,4], startTime: "16:00", endTime: "23:00" },
+      { days: [5,6], startTime: "16:00", endTime: "00:00" }
+    ],
     website: "", instagram: "", facebook: "",
     schedules: [],
     notes: "",
@@ -417,11 +446,13 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "The Original Pinkie Master's",
     neighborhood: "Downtown / Historic District",
     address: "318 Drayton St, Savannah, GA 31401",
-    hours: "Approx. 1pm–3am, closed Sunday (unconfirmed — worth double-checking)",
+    hoursBlocks: [
+      { days: [1,2,3,4,5,6], startTime: "13:00", endTime: "03:00" }
+    ],
     website: "https://theoriginalpinkies.com",
     instagram: "", facebook: "",
     schedules: [],
-    notes: "Dive bar since 1951.",
+    notes: "Dive bar since 1951. Hours are approximate (~1pm–3am, closed Sunday) — worth double-checking.",
     cashOnly: true,
     addedBy: "Will G."
   },
@@ -465,7 +496,13 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Electric Moon Skytop Lounge + Moon Deck",
     neighborhood: "Plant Riverside District / River St",
     address: "400 W River St, Savannah, GA 31401",
-    hours: "Mon–Wed 3pm–11pm · Thu 12pm–11pm · Fri 12pm–1am · Sat 11am–1am · Sun 11am–11pm",
+    hoursBlocks: [
+      { days: [1,2,3], startTime: "15:00", endTime: "23:00" },
+      { days: [4], startTime: "12:00", endTime: "23:00" },
+      { days: [5], startTime: "12:00", endTime: "01:00" },
+      { days: [6], startTime: "11:00", endTime: "01:00" },
+      { days: [0], startTime: "11:00", endTime: "23:00" }
+    ],
     website: "", instagram: "", facebook: "",
     schedules: [],
     notes: "Rooftop bar above the JW Marriott, with a slide down to the Moon Deck.",
@@ -484,7 +521,11 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Peacock Lounge",
     neighborhood: "Downtown / Historic District",
     address: "37 Whitaker St, Savannah, GA 31401",
-    hours: "Sun–Wed 5pm–12am · Thu 5pm–1am · Fri–Sat 5pm–2am",
+    hoursBlocks: [
+      { days: [0,1,2,3], startTime: "17:00", endTime: "00:00" },
+      { days: [4], startTime: "17:00", endTime: "01:00" },
+      { days: [5,6], startTime: "17:00", endTime: "02:00" }
+    ],
     website: "https://www.peacock-lounge.com",
     instagram: "", facebook: "",
     schedules: [],
@@ -504,11 +545,14 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Chive Sea Bar & Lounge",
     neighborhood: "Broughton St / Downtown",
     address: "4 W Broughton St, Savannah, GA 31401",
-    hours: "Daily approx. 10am–3pm · Daily approx. 5pm–10pm (varies by day — worth confirming)",
+    hoursBlocks: [
+      { days: [0,1,2,3,4,5,6], startTime: "10:00", endTime: "15:00" },
+      { days: [0,1,2,3,4,5,6], startTime: "17:00", endTime: "22:00" }
+    ],
     website: "https://www.chivelounge.com",
     instagram: "", facebook: "",
     schedules: [],
-    notes: "1920s art-deco seafood lounge.",
+    notes: "1920s art-deco seafood lounge. Hours vary a bit by day — worth confirming.",
     addedBy: "Will G."
   },
   {
@@ -524,7 +568,9 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "The Wormhole",
     neighborhood: "Starland District",
     address: "2307 Bull St, Savannah, GA 31401",
-    hours: "Mon–Sat 6pm–3am",
+    hoursBlocks: [
+      { days: [1,2,3,4,5,6], startTime: "18:00", endTime: "03:00" }
+    ],
     website: "https://wormholebar.com",
     instagram: "", facebook: "https://www.facebook.com/TheWormhole/",
     schedules: [],
@@ -535,17 +581,19 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "McDonough's",
     neighborhood: "Downtown / Historic District South",
     address: "21 E McDonough St, Savannah, GA 31401",
-    hours: "Opens 10am, kitchen open late",
+    hoursBlocks: [],
     website: "", instagram: "", facebook: "",
     schedules: [],
-    notes: "Their own listing says \"Happy Hour starts at 2pm\" but didn't give an end time or specials — worth confirming and filling in. Also known for Savannah's best karaoke.",
+    notes: "Opens 10am, kitchen open late. Their own listing says \"Happy Hour starts at 2pm\" but didn't give an end time or specials — worth confirming and filling in. Also known for Savannah's best karaoke.",
     addedBy: "Will G."
   },
   {
     venue: "The Bootlegger",
     neighborhood: "River St",
     address: "115 E River St, Savannah, GA 31401",
-    hours: "Mon–Fri 11am–12am (weekend hours vary)",
+    hoursBlocks: [
+      { days: [1,2,3,4,5], startTime: "11:00", endTime: "00:00" }
+    ],
     website: "", instagram: "", facebook: "",
     schedules: [],
     notes: "1930s speakeasy-themed bar and small plates.",
@@ -555,7 +603,9 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Rogue Water Tap House",
     neighborhood: "MLK Jr Blvd / Downtown",
     address: "38 MLK Jr Blvd, Savannah, GA 31401",
-    hours: "Mon–Sat 4pm–2am · Closed Sun",
+    hoursBlocks: [
+      { days: [1,2,3,4,5,6], startTime: "16:00", endTime: "02:00" }
+    ],
     website: "", instagram: "", facebook: "",
     schedules: [],
     notes: "Extensive beer & wine list plus a full cocktail bar.",
@@ -565,7 +615,10 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Two Tides Brewing Co.",
     neighborhood: "Starland Yard",
     address: "12 West 41st Street, Savannah, GA 31401",
-    hours: "Sun–Thu 12pm–10pm · Fri–Sat 12pm–12am",
+    hoursBlocks: [
+      { days: [0,1,2,3,4], startTime: "12:00", endTime: "22:00" },
+      { days: [5,6], startTime: "12:00", endTime: "00:00" }
+    ],
     website: "https://www.twotidesbrewing.com",
     instagram: "", facebook: "",
     schedules: [],
@@ -576,7 +629,12 @@ const SAVANNAH_STARTER_DEALS = [
     venue: "Smol Bar",
     neighborhood: "Starland Yard",
     address: "2421 De Soto Ave, Savannah, GA 31401",
-    hours: "Thu 4–10pm · Fri 4pm–12am · Sat 12pm–12am · Sun 12pm–10pm",
+    hoursBlocks: [
+      { days: [4], startTime: "16:00", endTime: "22:00" },
+      { days: [5], startTime: "16:00", endTime: "00:00" },
+      { days: [6], startTime: "12:00", endTime: "00:00" },
+      { days: [0], startTime: "12:00", endTime: "22:00" }
+    ],
     website: "https://www.twotidesbrewing.com",
     instagram: "", facebook: "",
     schedules: [],
@@ -596,13 +654,28 @@ const SAVANNAH_STARTER_DEALS = [
 
 const CHANGELOG = [
   { date: "Latest", items: [
-    "Added an About panel (this one) with app info and update history.",
-    "Different-day deals at one venue now display in day-of-week order.",
-    "Listings are sorted alphabetically by venue name instead of by time.",
-    "Ardsley Station's second daily happy hour (9–10pm) is now a real schedule block, not just a note.",
-    "\"Sync Savannah starters\" now updates venues you've already loaded instead of skipping them — safe to run any time the starter list changes.",
+    "Added \"Verified X ago\" to each listing, based on when it was last edited.",
+    "Added a Share button — uses your phone's share sheet (or copies text) to send a deal to a group chat.",
+    "Warns you if you're about to add a venue that's already on the tab.",
+    "Added a Surprise Me button that jumps to a random spot that's pouring right now.",
+    "Added Group by area — optional neighborhood section headers in list view.",
+    "Temporarily restored \"sync Savannah starters\" to push the new hours format through — remove again once run.",
   ]},
   { date: "Earlier", items: [
+    "Operating hours now use the same day-block editor as happy hour times — no more free-text guessing, and hours can differ by day.",
+    "Added an \"Open now\" filter, separate from \"Pouring now\" (which is about the happy hour itself).",
+    "Added search across venue name, neighborhood, notes, and drink/food items.",
+    "Added Find Me and Near Me — locate yourself on the map, or sort the list by distance.",
+    "Added favorites (☆) — starred spots float to the top of any sort.",
+    "Added Starting Soon and Newest sort options alongside A–Z and Near Me.",
+    "Added a Directions link on every listing with an address.",
+    "Added a happy beer logo, plus install-as-app support (home screen icon, standalone launch).",
+  ]},
+  { date: "Earlier still", items: [
+    "Added an About panel (this one) with app info and update history.",
+    "Different-day deals at one venue now display in day-of-week order.",
+    "Listings are sorted alphabetically by venue name by default.",
+    "Ardsley Station's second daily happy hour (9–10pm) is now a real schedule block, not just a note.",
     "Added full operating hours as a field separate from happy hour times.",
     "Added a cash-only badge for venues that don't take cards.",
     "Expanded the Savannah starter pack to 32 real venues with verified addresses.",
@@ -638,6 +711,8 @@ const state = {
   sortMode: "alpha", // 'alpha' | 'near' | 'soon' | 'new'
   focusUserLocation: false,
   favorites: new Set(JSON.parse(localStorage.getItem("tab-favorites") || "[]")),
+  groupByNeighborhood: false,
+  cityFilter: "all",
 };
 
 let leafletMapInstance = null;
@@ -806,9 +881,27 @@ function parseHoursToBlocks(hoursText) {
     return null;
   }
 }
+// Structured operating-hours accessor. Falls back to parsing the old free-text
+// "hours" field for any venue that predates the day-block editor.
+function getHoursBlocks(deal) {
+  if (deal.hoursBlocks && deal.hoursBlocks.length) return deal.hoursBlocks;
+  if (deal.hours) {
+    const parsed = parseHoursToBlocks(deal.hours);
+    if (parsed) return parsed;
+  }
+  return [];
+}
+function summarizeHours(deal) {
+  const blocks = getHoursBlocks(deal);
+  if (!blocks.length) return "";
+  return blocks.map(b => {
+    const days = DAYS.filter((_, i) => (b.days || []).includes(i)).join(",");
+    return `${days} ${fmtTime(b.startTime)}–${fmtTime(b.endTime)}`;
+  }).join(" · ");
+}
 function isOpenNow(deal) {
-  const blocks = parseHoursToBlocks(deal.hours);
-  if (!blocks) return null; // unknown — don't guess
+  const blocks = getHoursBlocks(deal);
+  if (!blocks.length) return null; // unknown — don't guess
   return blocks.some(b => scheduleActive(b, state.now));
 }
 
@@ -827,6 +920,86 @@ function directionsUrl(deal) {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(deal.address + ", Savannah, GA")}`;
   }
   return null;
+}
+
+// City filtering: uses an explicit city field if set, otherwise derives "City, ST" from
+// the street address so older entries (and future ones without a manually-set city) still work.
+function getCity(deal) {
+  if (deal.city) return deal.city;
+  if (deal.address) {
+    const m = deal.address.match(/,\s*([A-Za-z .'-]+),\s*([A-Z]{2})\b/);
+    if (m) return `${m[1].trim()}, ${m[2].trim()}`;
+  }
+  return "";
+}
+
+function fmtRelativeTime(ts) {
+  if (!ts) return null;
+  const diffDays = Math.floor((Date.now() - ts) / 86400000);
+  if (diffDays <= 0) return "today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  const weeks = Math.floor(diffDays / 7);
+  if (weeks === 1) return "1 week ago";
+  if (weeks < 5) return `${weeks} weeks ago`;
+  const months = Math.floor(diffDays / 30);
+  if (months <= 1) return "1 month ago";
+  if (months < 12) return `${months} months ago`;
+  const years = Math.floor(diffDays / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+}
+
+function buildShareText(deal) {
+  const lines = [deal.venue];
+  if (deal.neighborhood) lines.push(deal.neighborhood);
+  getSchedules(deal).forEach(s => {
+    const days = DAYS.filter((_, i) => (s.days || []).includes(i)).join(", ");
+    lines.push(`${days} ${fmtTime(s.startTime)}–${fmtTime(s.endTime)}`);
+    (s.drinks || []).forEach(d => lines.push(`- ${d}`));
+    (s.food || []).forEach(f => lines.push(`- ${f}`));
+  });
+  if (deal.notes) lines.push(deal.notes);
+  if (deal.address) lines.push(deal.address);
+  return lines.join("\n");
+}
+async function shareDeal(id) {
+  const deal = state.deals.find(d => d.id === id);
+  if (!deal) return;
+  const text = buildShareText(deal);
+  const btn = document.querySelector(`[data-share="${id}"]`);
+  try {
+    if (navigator.share) {
+      await navigator.share({ text, title: deal.venue });
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") return; // user closed the share sheet
+    state.error = "Couldn't share that — try copying it manually.";
+    render();
+  }
+}
+
+function findDuplicateVenue(name, excludeId) {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  return state.deals.find(d => d.id !== excludeId && (d.venue || "").trim().toLowerCase() === key) || null;
+}
+
+function surpriseMe() {
+  const pouring = state.deals.filter(d => isActiveNow(d, state.now));
+  if (!pouring.length) {
+    state.error = "Nothing's pouring right now — try again during happy hour!";
+    render();
+    return;
+  }
+  const pick = pouring[Math.floor(Math.random() * pouring.length)];
+  goToListing(pick.id);
 }
 
 async function setSortMode(mode) {
@@ -862,6 +1035,14 @@ async function locateOnMap() {
     state.locating = false;
     render();
   }
+}
+
+function goHome() {
+  if (!leafletMapInstance) return;
+  const cityDeals = state.cityFilter === "all" ? state.deals : state.deals.filter(d => getCity(d) === state.cityFilter);
+  const withCoords = cityDeals.filter(d => typeof d.lat === "number" && typeof d.lng === "number");
+  if (!withCoords.length) return;
+  leafletMapInstance.fitBounds(withCoords.map(d => [d.lat, d.lng]), { padding: [40, 40], maxZoom: 15 });
 }
 
 async function geocodeAddress(address) {
@@ -923,6 +1104,8 @@ async function deleteDeal(id) {
     state.confirmDeleteId = null; render();
   }
 }
+// Temporarily restored to push the new structured hoursBlocks format into venues
+// that were seeded before that change. Remove again once you've run it.
 async function seedStarterDeals() {
   const btn = document.getElementById("seed-btn") || document.getElementById("seed-link");
   if (btn) { btn.disabled = true; btn.textContent = "Syncing Savannah starters…"; }
@@ -994,7 +1177,9 @@ function clockLabel() {
 
 function getVisibleDeals() {
   let list = [...state.deals];
+  if (state.cityFilter !== "all") list = list.filter(d => getCity(d) === state.cityFilter);
   if (state.filter === "live") list = list.filter(d => isActiveNow(d, state.now));
+  else if (state.filter === "open") list = list.filter(d => isOpenNow(d) === true);
   else if (typeof state.filter === "number") list = list.filter(d => dealMatchesDay(d, state.filter));
   const q = state.search.trim().toLowerCase();
   if (q) list = list.filter(d => dealMatchesSearch(d, q));
@@ -1025,6 +1210,7 @@ function getVisibleDeals() {
 function render() {
   const app = document.getElementById("app");
   const visibleDeals = getVisibleDeals();
+  const cities = [...new Set(state.deals.map(getCity).filter(Boolean))].sort();
 
   // Preserve focus/cursor on the search box across re-renders (this rebuilds the whole DOM)
   const active = document.activeElement;
@@ -1052,12 +1238,21 @@ function render() {
 
         <input type="text" id="search-input" class="field-input" style="background:rgba(255,255,255,0.95);margin-top:12px;" placeholder="Search venues, drinks, food…" value="${esc(state.search)}" />
 
+        ${cities.length > 1 ? `
+        <select id="city-filter" class="field-input" style="background:rgba(255,255,255,0.95);margin-top:8px;">
+          <option value="all" ${state.cityFilter==='all'?'selected':''}>All cities</option>
+          ${cities.map(c => `<option value="${esc(c)}" ${state.cityFilter===c?'selected':''}>${esc(c)}</option>`).join("")}
+        </select>` : ""}
+
         <div class="filter-row">
           <button class="filter-chip ${state.view==='list'?'active':''}" data-view="list">List</button>
           <button class="filter-chip ${state.view==='map'?'active':''}" data-view="map">Map</button>
+          ${state.view === 'list' ? `<button class="filter-chip ${state.groupByNeighborhood?'active':''}" id="group-toggle">Group by area</button>` : ""}
+          <button class="filter-chip" id="surprise-btn">🎲 Surprise me</button>
         </div>
         <div class="filter-row">
           <button class="filter-chip ${state.filter==='live'?'active':''}" data-filter="live">Pouring now</button>
+          <button class="filter-chip ${state.filter==='open'?'active':''}" data-filter="open">Open now</button>
           <button class="filter-chip ${state.filter==='all'?'active':''}" data-filter="all">All deals</button>
           ${DAYS.map((d,i)=>`<button class="filter-chip ${state.filter===i?'active':''}" data-filter="${i}">${d}</button>`).join("")}
         </div>
@@ -1098,6 +1293,7 @@ function renderMapView(list) {
   return `
     <div style="position:relative;">
       <div id="map"></div>
+      <button id="home-btn" title="Zoom to all points in ${state.cityFilter === 'all' ? 'view' : esc(state.cityFilter)}" style="position:absolute;bottom:64px;right:14px;background:var(--cream);z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:50%;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;">🏠</button>
       <button id="locate-btn" title="Find me" style="position:absolute;bottom:14px;right:14px;background:var(--cream);z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:50%;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;">${state.locating ? "⏳" : "📍"}</button>
     </div>
     ${missing.length ? `<p class="mono" style="font-size:12px;opacity:.6;margin-top:10px;">${missing.length} deal${missing.length>1?'s':''} without an address won't show on the map yet — edit them to add one.</p>` : ""}
@@ -1183,6 +1379,7 @@ function renderDealsOrEmpty(list) {
     const hasAny = state.deals.length > 0;
     let msg = "No deals on the tab yet. Start it off.";
     if (hasAny && state.filter === "live") msg = "Nothing's pouring right now. Check All deals or a specific day.";
+    else if (hasAny && state.filter === "open") msg = "Nothing marked open right now (or hours just aren't filled in yet for these spots).";
     else if (hasAny) msg = "No deals match this filter.";
     return `
       <div class="empty-state">
@@ -1191,9 +1388,26 @@ function renderDealsOrEmpty(list) {
         ${!hasAny ? `
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button class="btn-primary" id="empty-add-btn">+ Add the first deal</button>
-            <button class="btn-ghost on-dark" id="seed-btn">Load Savannah starter deals</button>
           </div>` : ""}
       </div>`;
+  }
+  if (state.groupByNeighborhood) {
+    const groups = {};
+    list.forEach(d => {
+      const key = (d.neighborhood || "").trim() || "Other";
+      (groups[key] = groups[key] || []).push(d);
+    });
+    const keys = Object.keys(groups).sort((a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return a.localeCompare(b, undefined, { sensitivity: "base" });
+    });
+    return keys.map(key => `
+      <div style="margin-bottom:24px;">
+        <p class="mono" style="color:var(--gold-bright);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px 2px;">${esc(key)}</p>
+        <div style="display:flex;flex-direction:column;gap:20px;">${groups[key].map(dealCardHtml).join("")}</div>
+      </div>
+    `).join("");
   }
   return `<div style="display:flex;flex-direction:column;gap:20px;">${list.map(dealCardHtml).join("")}</div>`;
 }
@@ -1234,8 +1448,9 @@ function dealCardHtml(deal) {
             <button class="fav-btn" data-fav="${deal.id}" title="${isFav ? "Remove favorite" : "Mark as favorite"}" aria-label="${isFav ? "Remove favorite" : "Mark as favorite"}">${isFav ? "★" : "☆"}</button>
           </div>
           ${deal.neighborhood ? `<p class="mono" style="font-size:12px;margin:3px 0 0;opacity:.65;">${esc(deal.neighborhood)}</p>` : ""}
+          ${deal.address ? `<p class="mono" style="font-size:11px;margin:2px 0 0;opacity:.55;">${esc(deal.address)}</p>` : ""}
           ${distance !== null ? `<p class="mono" style="font-size:11px;margin:3px 0 0;opacity:.7;color:var(--green);font-weight:600;">📍 ${fmtDistance(distance)}</p>` : ""}
-          ${deal.hours ? `<p class="mono" style="font-size:11px;margin:4px 0 0;opacity:.6;">Open ${esc(deal.hours)}${openNow === true ? ' <span class="open-badge">OPEN NOW</span>' : openNow === false ? ' <span class="closed-badge">CLOSED NOW</span>' : ""}</p>` : ""}
+          ${summarizeHours(deal) ? `<p class="mono" style="font-size:11px;margin:4px 0 0;opacity:.6;">Open ${esc(summarizeHours(deal))}${openNow === true ? ' <span class="open-badge">OPEN NOW</span>' : openNow === false ? ' <span class="closed-badge">CLOSED NOW</span>' : ""}</p>` : ""}
           ${deal.cashOnly ? `<span class="cash-badge" style="margin-top:6px;">💵 CASH ONLY</span>` : ""}
         </div>
         ${active ? `<span class="pour-badge"><span class="pour-dot"></span>POURING NOW</span>` : ""}
@@ -1253,8 +1468,9 @@ function dealCardHtml(deal) {
         </div>` : ""}
       <div class="tear-divider"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <p class="mono" style="font-size:11px;opacity:.55;margin:0;">added by ${esc(deal.addedBy || "someone")}</p>
+        <p class="mono" style="font-size:11px;opacity:.55;margin:0;">added by ${esc(deal.addedBy || "someone")}${deal.updatedAt ? ` · verified ${fmtRelativeTime(deal.updatedAt)}` : ""}</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="icon-btn" data-share="${deal.id}">Share</button>
           ${typeof deal.lat === "number" ? `<button class="icon-btn" data-viewmap="${deal.id}">View on map</button>` : ""}
           <button class="icon-btn" data-edit="${deal.id}">Edit</button>
           <button class="icon-btn danger" data-delete="${deal.id}">Delete</button>
@@ -1290,10 +1506,31 @@ function scheduleBlockHtml(s, idx) {
   </div>`;
 }
 
+function hoursBlockHtml(b, idx) {
+  const days = b?.days || [];
+  return `
+  <div class="hours-block" data-idx="${idx}" style="border:1px solid rgba(32,28,20,0.15);border-radius:6px;padding:10px;margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <p class="field-label" style="margin:0;">Open days & times</p>
+      <button type="button" class="icon-btn danger remove-hours-block">Remove</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;">
+      ${DAYS.map((day,i)=>`<button type="button" class="day-chip ${days.includes(i)?'selected':''}" data-hday="${i}">${day}</button>`).join("")}
+    </div>
+    <input type="hidden" class="hours-days" value="${days.join(",")}" />
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label class="field-label">Opens</label><input type="time" class="field-input hours-start" value="${b?.startTime||"16:00"}" /></div>
+      <div><label class="field-label">Closes</label><input type="time" class="field-input hours-end" value="${b?.endTime||"22:00"}" /></div>
+    </div>
+  </div>`;
+}
+
 function renderForm() {
   const d = state.editingDeal;
   const schedules = d ? getSchedules(d) : [];
   const blocks = (schedules.length ? schedules : [null]).map((s,i) => scheduleBlockHtml(s, i)).join("");
+  const hoursData = d ? getHoursBlocks(d) : [];
+  const hoursBlocks = hoursData.map((b,i) => hoursBlockHtml(b, i)).join("");
   return `
     <div class="modal-overlay" id="form-overlay">
       <form class="ticket" id="deal-form" style="max-width:520px;width:100%;padding:26px 24px 20px;margin-top:10px;">
@@ -1301,7 +1538,8 @@ function renderForm() {
         <div style="display:grid;gap:14px;">
           <div>
             <label class="field-label">Venue name</label>
-            <input class="field-input" name="venue" value="${esc(d?.venue||"")}" placeholder="e.g. The Anchor Room" />
+            <input class="field-input" name="venue" id="venue-input" value="${esc(d?.venue||"")}" placeholder="e.g. The Anchor Room" />
+            <p id="dup-warning" class="field-hint" style="color:var(--rust);display:none;"></p>
           </div>
           <div>
             <label class="field-label">Neighborhood / area (optional)</label>
@@ -1312,11 +1550,20 @@ function renderForm() {
             <input class="field-input" name="address" value="${esc(d?.address||"")}" placeholder="e.g. 1801 Habersham St, Savannah, GA" />
             <p class="field-hint">Used to place this deal on the map. Skip it and it just won't show there.</p>
           </div>
+          <div>
+            <label class="field-label">City</label>
+            <input class="field-input" name="city" list="known-cities" value="${esc(d ? getCity(d) : (localStorage.getItem("tab-last-city") || "Savannah, GA"))}" placeholder="e.g. Savannah, GA" />
+            <datalist id="known-cities">
+              ${[...new Set(state.deals.map(getCity).filter(Boolean))].sort().map(c => `<option value="${esc(c)}"></option>`).join("")}
+            </datalist>
+            <p class="field-hint">Lets you filter the tab by city once you're tracking more than one.</p>
+          </div>
 
           <div>
             <label class="field-label">Full operating hours (optional)</label>
-            <input class="field-input" name="hours" value="${esc(d?.hours||"")}" placeholder="e.g. Mon–Thu 3pm–3am · Fri–Sat 12pm–3am · Sun 12pm–2am" />
-            <p class="field-hint">Separate from the happy hour times below — this is when the place is open at all.</p>
+            <p class="field-hint" style="margin:0 0 8px;">Separate from the happy hour times below — this is when the place is open at all. Add a block per set of days; use more than one if hours differ by day.</p>
+            <div id="hours-container">${hoursBlocks}</div>
+            <button type="button" class="btn-ghost" id="add-hours-btn">+ Add open hours</button>
           </div>
 
           <div id="schedules-container">${blocks}</div>
@@ -1421,28 +1668,38 @@ function bindEvents() {
   document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.onclick = () => {
       const v = btn.dataset.filter;
-      state.filter = (v === "live" || v === "all") ? v : Number(v);
+      state.filter = (v === "live" || v === "all" || v === "open") ? v : Number(v);
       render();
     };
   });
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.onclick = () => { state.view = btn.dataset.view; render(); };
   });
+  const groupToggle = document.getElementById("group-toggle");
+  if (groupToggle) groupToggle.onclick = () => { state.groupByNeighborhood = !state.groupByNeighborhood; render(); };
+  const surpriseBtn = document.getElementById("surprise-btn");
+  if (surpriseBtn) surpriseBtn.onclick = () => surpriseMe();
 
   const searchInput = document.getElementById("search-input");
   if (searchInput) searchInput.oninput = (e) => { state.search = e.target.value; render(); };
+  const cityFilterEl = document.getElementById("city-filter");
+  if (cityFilterEl) cityFilterEl.onchange = (e) => {
+    state.cityFilter = e.target.value;
+    mapEverFit = false; // let the map re-fit to whichever city is now showing
+    render();
+  };
   document.querySelectorAll("[data-sort]").forEach(btn => {
     btn.onclick = () => setSortMode(btn.dataset.sort);
   });
   const locateBtn = document.getElementById("locate-btn");
   if (locateBtn) locateBtn.onclick = () => locateOnMap();
+  const homeBtn = document.getElementById("home-btn");
+  if (homeBtn) homeBtn.onclick = () => goHome();
 
   const addBtn = document.getElementById("add-btn");
   if (addBtn) addBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
   const emptyAddBtn = document.getElementById("empty-add-btn");
   if (emptyAddBtn) emptyAddBtn.onclick = () => { state.editingDeal = null; state.showForm = true; render(); };
-  const seedBtn = document.getElementById("seed-btn");
-  if (seedBtn) seedBtn.onclick = () => seedStarterDeals();
   const seedLink = document.getElementById("seed-link");
   if (seedLink) seedLink.onclick = () => seedStarterDeals();
   const aboutLink = document.getElementById("about-link");
@@ -1463,6 +1720,9 @@ function bindEvents() {
   document.querySelectorAll("[data-fav]").forEach(btn => {
     btn.onclick = () => toggleFavorite(btn.dataset.fav);
   });
+  document.querySelectorAll("[data-share]").forEach(btn => {
+    btn.onclick = () => shareDeal(btn.dataset.share);
+  });
 
   const formOverlay = document.getElementById("form-overlay");
   if (formOverlay) {
@@ -1470,6 +1730,22 @@ function bindEvents() {
     document.getElementById("form-cancel").onclick = () => { state.showForm = false; state.editingDeal = null; render(); };
 
     const form = document.getElementById("deal-form");
+
+    const venueInput = document.getElementById("venue-input");
+    if (venueInput) {
+      venueInput.oninput = () => {
+        const dup = findDuplicateVenue(venueInput.value, state.editingDeal?.id);
+        const warn = document.getElementById("dup-warning");
+        if (warn) {
+          if (dup) {
+            warn.textContent = `"${dup.venue}" is already on the tab — check if this is a duplicate before adding another.`;
+            warn.style.display = "block";
+          } else {
+            warn.style.display = "none";
+          }
+        }
+      };
+    }
 
     form.addEventListener("click", (e) => {
       if (e.target.matches("[data-day]")) {
@@ -1485,11 +1761,27 @@ function bindEvents() {
         const blocks = form.querySelectorAll(".schedule-block");
         if (blocks.length > 1) e.target.closest(".schedule-block").remove();
       }
+      if (e.target.matches("[data-hday]")) {
+        const block = e.target.closest(".hours-block");
+        const hidden = block.querySelector(".hours-days");
+        let days = hidden.value ? hidden.value.split(",").map(Number) : [];
+        const i = Number(e.target.dataset.hday);
+        days = days.includes(i) ? days.filter(x=>x!==i) : [...days, i].sort((a,b)=>a-b);
+        hidden.value = days.join(",");
+        e.target.classList.toggle("selected");
+      }
+      if (e.target.classList.contains("remove-hours-block")) {
+        e.target.closest(".hours-block").remove();
+      }
     });
 
     document.getElementById("add-schedule-btn").onclick = () => {
       scheduleBlockCounter += 1;
       document.getElementById("schedules-container").insertAdjacentHTML("beforeend", scheduleBlockHtml(null, "new" + scheduleBlockCounter));
+    };
+    document.getElementById("add-hours-btn").onclick = () => {
+      scheduleBlockCounter += 1;
+      document.getElementById("hours-container").insertAdjacentHTML("beforeend", hoursBlockHtml(null, "new" + scheduleBlockCounter));
     };
 
     form.onsubmit = async (e) => {
@@ -1514,6 +1806,19 @@ function bindEvents() {
         });
       });
 
+      const hoursBlockEls = form.querySelectorAll(".hours-block");
+      const hoursBlocks = [];
+      hoursBlockEls.forEach(block => {
+        const daysVal = block.querySelector(".hours-days").value;
+        const days = daysVal ? daysVal.split(",").map(Number) : [];
+        if (!days.length) return;
+        hoursBlocks.push({
+          days,
+          startTime: block.querySelector(".hours-start").value,
+          endTime: block.querySelector(".hours-end").value,
+        });
+      });
+
       if (!venue || !schedules.length || !addedBy) {
         errEl.textContent = "Venue, at least one day/time block with a day selected, and your name are required.";
         errEl.style.display = "block";
@@ -1523,14 +1828,16 @@ function bindEvents() {
       const submitBtn = f.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       const address = f.address.value.trim();
+      const city = f.city.value.trim();
       submitBtn.textContent = address ? "Finding it on the map…" : "Saving…";
       let coords = null;
       if (address) coords = await geocodeAddress(address);
       if (addedBy !== state.myName) saveName(addedBy);
+      if (city) localStorage.setItem("tab-last-city", city);
 
       const data = {
-        venue, neighborhood: f.neighborhood.value.trim(), address,
-        hours: f.hours.value.trim(),
+        venue, neighborhood: f.neighborhood.value.trim(), address, city,
+        hoursBlocks,
         schedules,
         notes: f.notes.value.trim(), addedBy,
         cashOnly: f.cashOnly.checked,
