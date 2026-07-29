@@ -834,6 +834,7 @@ const state = {
   locating: false,
   sortMode: "alpha", // 'alpha' | 'near' | 'soon' | 'new'
   focusUserLocation: false,
+  pickingLocationFor: null,
   favorites: new Set(JSON.parse(localStorage.getItem("tab-favorites") || "[]")),
   groupByNeighborhood: false,
   cityFilter: "all",
@@ -1215,7 +1216,23 @@ async function retryGeocode(id) {
       state.error = "Found the location but couldn't save it — try again.";
     }
   } else {
-    state.error = `Couldn't find "${deal.address}" on a map. Try editing it to be more specific (street, city, and state).`;
+    state.error = `Couldn't find "${deal.address}" on a map. Try editing it to be more specific (street, city, and state), or use "Set pin manually" instead.`;
+  }
+  render();
+}
+
+function startPickLocation(id) {
+  state.pickingLocationFor = id;
+  state.view = "map";
+  render();
+}
+async function placePinManually(id, lat, lng) {
+  state.pickingLocationFor = null;
+  try {
+    await db.collection("deals").doc(id).update({ lat, lng, updatedAt: Date.now() });
+    state.error = null;
+  } catch (e) {
+    state.error = "Couldn't save that pin location — try again.";
   }
   render();
 }
@@ -1489,13 +1506,19 @@ function render() {
 
 function renderMapView(list) {
   const missing = list.filter(d => !(typeof d.lat === 'number' && typeof d.lng === 'number'));
+  const pickingDeal = state.pickingLocationFor ? state.deals.find(d => d.id === state.pickingLocationFor) : null;
   return `
     <div style="position:relative;">
+      ${pickingDeal ? `
+        <div style="position:absolute;top:10px;left:10px;right:10px;z-index:1200;background:var(--cream);border-radius:6px;padding:10px 14px;box-shadow:0 4px 12px rgba(0,0,0,0.35);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:13px;color:var(--ink);font-weight:600;">Tap the map to place a pin for "${esc(pickingDeal.venue)}"</span>
+          <button type="button" id="cancel-pick-btn" class="icon-btn">Cancel</button>
+        </div>` : ""}
       <div id="map"></div>
       <button id="home-btn" title="Zoom to all points in ${state.cityFilter === 'all' ? 'view' : esc(state.cityFilter)}" style="position:absolute;bottom:64px;right:14px;background:var(--cream);z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:50%;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;">🏠</button>
       <button id="locate-btn" title="Find me" style="position:absolute;bottom:14px;right:14px;background:var(--cream);z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:50%;width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;">${state.locating ? "⏳" : "📍"}</button>
     </div>
-    ${missing.length ? `<p class="mono" style="font-size:12px;opacity:.6;margin-top:10px;">${missing.length} deal${missing.length>1?'s':''} without an address won't show on the map yet — edit them to add one.</p>` : ""}
+    ${missing.length ? `<p class="mono" style="font-size:12px;opacity:.6;margin-top:10px;">${missing.length} deal${missing.length>1?'s':''} without an address won't show on the map yet — edit them to add one, or use "Set pin manually" on the card.</p>` : ""}
   `;
 }
 
@@ -1518,6 +1541,13 @@ function initMap(list) {
     mapState.center = leafletMapInstance.getCenter();
     mapState.zoom = leafletMapInstance.getZoom();
   });
+
+  if (state.pickingLocationFor) {
+    leafletMapInstance.getContainer().style.cursor = "crosshair";
+    leafletMapInstance.once("click", (e) => {
+      placePinManually(state.pickingLocationFor, e.latlng.lat, e.latlng.lng);
+    });
+  }
 
   const withCoords = (list || state.deals).filter(d => typeof d.lat === "number" && typeof d.lng === "number");
   const markersById = {};
@@ -1697,8 +1727,8 @@ function dealCardHtml(deal) {
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="icon-btn" data-share="${deal.id}">Share</button>
           ${typeof deal.lat === "number"
-            ? `<button class="icon-btn" data-viewmap="${deal.id}">View on map</button>`
-            : (deal.address ? `<button class="icon-btn" data-retrygeo="${deal.id}">📍 Place on map</button>` : "")}
+            ? `<button class="icon-btn" data-viewmap="${deal.id}">View on map</button><button class="icon-btn" data-pickpin="${deal.id}">Move pin</button>`
+            : `${deal.address ? `<button class="icon-btn" data-retrygeo="${deal.id}">📍 Auto-locate</button>` : ""}<button class="icon-btn" data-pickpin="${deal.id}">📌 Set pin manually</button>`}
           <button class="icon-btn" data-edit="${deal.id}">Edit</button>
           <button class="icon-btn danger" data-delete="${deal.id}">Delete</button>
         </div>
@@ -2022,6 +2052,11 @@ function bindEvents() {
   document.querySelectorAll("[data-retrygeo]").forEach(btn => {
     btn.onclick = () => retryGeocode(btn.dataset.retrygeo);
   });
+  document.querySelectorAll("[data-pickpin]").forEach(btn => {
+    btn.onclick = () => startPickLocation(btn.dataset.pickpin);
+  });
+  const cancelPickBtn = document.getElementById("cancel-pick-btn");
+  if (cancelPickBtn) cancelPickBtn.onclick = () => { state.pickingLocationFor = null; render(); };
   document.querySelectorAll("[data-fav]").forEach(btn => {
     btn.onclick = () => toggleFavorite(btn.dataset.fav);
   });
