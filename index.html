@@ -1263,7 +1263,11 @@ db.collection("neighborhoods").onSnapshot(
     seedSavannahNeighborhoodsIfMissing(map);
     render();
   },
-  (err) => console.error("Neighborhoods sync error:", err)
+  (err) => {
+    console.error("Neighborhoods sync error:", err);
+    state.error = "Couldn't load neighborhoods — check that your Firestore rules also allow the \"neighborhoods\" collection (see the README).";
+    render();
+  }
 );
 
 async function addNeighborhood(city, name) {
@@ -2170,10 +2174,21 @@ function bindEvents() {
         instagram: normalizeUrl(f.instagram.value),
         facebook: normalizeUrl(f.facebook.value),
       };
-      if (coords) { data.lat = coords.lat; data.lng = coords.lng; }
+      if (coords) {
+        data.lat = coords.lat; data.lng = coords.lng;
+      } else if (address && state.editingDeal) {
+        // Address was changed/re-checked but couldn't be geocoded — clear any old pin
+        // rather than silently leaving it pointing at the previous address.
+        data.lat = firebase.firestore.FieldValue.delete();
+        data.lng = firebase.firestore.FieldValue.delete();
+      }
       submitBtn.textContent = "Saving…";
       if (address && !coords) {
-        state.error = `Saved, but couldn't find "${address}" on a map — it won't show a pin yet. Try the "Place on map" button on its card, or double-check the address.`;
+        state.error = state.editingDeal
+          ? `Saved, but couldn't re-locate "${address}" on the map — its old pin was removed since it may not match anymore. Try "Place on map" on the card, or double-check the address.`
+          : `Saved, but couldn't find "${address}" on a map — it won't show a pin yet. Try the "Place on map" button on its card, or double-check the address.`;
+      } else if (coords && state.editingDeal) {
+        state.focusDealId = state.editingDeal.id; // so the map centers on the corrected spot next time you check it
       }
       if (state.editingDeal) await updateDeal(state.editingDeal.id, data);
       else await addDeal(data);
