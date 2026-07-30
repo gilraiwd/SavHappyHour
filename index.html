@@ -1149,6 +1149,9 @@ function surpriseMe() {
 }
 
 async function setSortMode(mode) {
+  if (mode === "soon" && state.filter === "live") {
+    state.filter = "all"; // "Pouring now" would hide everything that hasn't started yet
+  }
   if (mode === "near") {
     if (state.myLocation) { state.sortMode = "near"; render(); return; }
     state.locating = true;
