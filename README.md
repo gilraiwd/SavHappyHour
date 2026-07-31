@@ -12,15 +12,17 @@ Started as a Savannah, GA project (hence the name), but works anywhere — see [
 - **Filters** — Pouring now, Open now, All deals, or a specific day of the week.
 - **Sort** — A–Z, Starting soon, Newest, or Near me (uses your device's location).
 - **Favorites** — star your go-to spots; they float to the top of any sort.
-- **Multi-day deals** — a single venue can have different specials on different days (e.g. Taco Tuesday vs. Whiskey Wednesday), each shown in its own block.
-- **Structured operating hours** — separate from happy hour times, so you can see if a place is open at all right now, with an "Open now" badge and filter.
+- **Multi-day deals** — a single venue can have different specials on different days (e.g. Taco Tuesday vs. Whiskey Wednesday), each shown in its own block, with consecutive days collapsed to ranges ("Mon–Fri") wherever they're displayed.
+- **Structured operating hours** — a day-block editor (same idea as happy hour times), separate from the happy hour itself, with an "Open now" badge and filter. Fully optional — you can drop a pin with no happy hour info yet and fill it in later.
 - **Cash-only badge** — flag venues that don't take cards.
 - **Directions, Website, Instagram, Facebook** — quick links on every listing.
 - **Share** — send a deal to a group chat via your device's native share sheet (or copies plain text on desktop).
-- **City filter** — the app supports tracking more than one city; a city dropdown appears automatically once there's more than one in use.
-- **Group by area** — optional neighborhood section headers in list view.
+- **Geocoding with manual fallback** — addresses are placed on the map automatically; if that fails (or you want to nudge a pin), tap the map directly to set or move a location.
+- **City filter** — the app supports tracking more than one city; a city dropdown appears automatically once there's more than one in use. "Group by area" nests under a city header too, once multiple cities are in play.
+- **Shared neighborhoods list** — a per-city dropdown (with "add new") when entering a deal, plus a management panel to edit the list directly. Savannah's official ~118-neighborhood list is seeded in automatically the first time.
 - **Surprise me** — jumps to a random spot that's pouring right now.
 - **Install as an app** — has a manifest, icons, and install support for the home screen on iOS/Android (via the browser's "Add to Home Screen" / "Install app").
+- **Data safety** — deleting shows an 8-second Undo; a warning appears if someone else edited a deal while you had it open, instead of silently overwriting their change; and a "Download backup (JSON)" button in the About panel exports everything on the tab.
 - **Cash- and edit-safe** — no login required; anyone with the link can add, edit, or delete deals (fine for a private friend-group link; see [Security note](#security-note) if you want to lock it down further).
 
 ## Setup
@@ -30,6 +32,23 @@ Started as a Savannah, GA project (hence the name), but works anywhere — see [
 1. Go to [console.firebase.google.com](https://console.firebase.google.com) and create a new project (the free "Spark" plan is enough).
 2. Go to **Build → Firestore Database → Create database** and start it in **test mode**.
 3. Go to **Project settings → General → Your apps → Web app (`</>`)**, register a new app, and copy the `firebaseConfig` object it gives you.
+4. Go to the **Rules** tab in Firestore and make sure both collections the app uses are covered:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /deals/{dealId} {
+         allow read, write: if true;
+       }
+       match /neighborhoods/{cityId} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+
+   ("Test mode" only auto-generates the `deals` rule for you if you set it up before the neighborhoods feature existed — if the neighborhood dropdown ever shows empty with no error, this is the first thing to check.)
 
 ### 2. Add your config to the app
 
@@ -73,9 +92,10 @@ Firebase web API keys are not secrets — Google's own docs confirm this. Access
 - [Leaflet](https://leafletjs.com/) + OpenStreetMap tiles for the map.
 - [Nominatim](https://nominatim.org/) (OpenStreetMap's free geocoding service) to turn addresses into map pins automatically when you save a deal.
 - Google Fonts (Fraunces, Inter, IBM Plex Mono) via CDN.
-- Data persists in Firestore; each person's name and favorites are stored locally in their own browser (`localStorage`), not shared.
+- Data persists in Firestore; each person's name, favorites, and last-used city are stored locally in their own browser (`localStorage`), not shared.
 
 ## Notes
 
 - Happy hour menus change often — treat any starter/seed data as a starting point, not gospel.
 - The app was originally seeded with real Savannah, GA venues and their published happy hour info as of mid-2026. That data lives in the `SAVANNAH_STARTER_DEALS` constant near the top of the script, kept for reference even though the sync/import feature that used it has since been removed (it risked overwriting hand-edited entries).
+- 
