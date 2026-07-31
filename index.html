@@ -841,6 +841,7 @@ const state = {
   neighborhoodsByCity: {},
   showManageNeighborhoods: false,
   manageCity: null,
+  lastDeleted: null,
 };
 
 let leafletMapInstance = null;
@@ -891,6 +892,7 @@ function isActiveNow(deal, now) {
 }
 function scheduleNextOccurrence(schedule, now) {
   if (!schedule.days || !schedule.days.length || !schedule.startTime) return Infinity;
+  if (scheduleActive(schedule, now)) return -1; // already happening — sorts before anything upcoming
   const nowDay = now.getDay(), nowMin = now.getHours()*60+now.getMinutes();
   const start = toMinutes(schedule.startTime);
   let best = Infinity;
@@ -1108,6 +1110,19 @@ function buildShareText(deal) {
   if (deal.address) lines.push(deal.address);
   return lines.join("\n");
 }
+function exportBackup() {
+  const payload = { exportedAt: new Date().toISOString(), deals: state.deals };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sav-happy-hour-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 async function shareDeal(id) {
   const deal = state.deals.find(d => d.id === id);
   if (!deal) return;
@@ -1246,7 +1261,9 @@ db.collection("deals").onSnapshot(
     state.deals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     state.loading = false;
     state.error = null;
-    render();
+    // Don't rebuild the whole app (and wipe an in-progress form) just because
+    // some background change came in — still keep state.deals fresh underneath.
+    if (!state.showForm) render();
   },
   (err) => {
     console.error(err);
@@ -1336,14 +1353,34 @@ async function updateDeal(id, data) {
     state.saving = false; render();
   }
 }
+let undoDeleteTimer = null;
 async function deleteDeal(id) {
+  const dealToDelete = state.deals.find(d => d.id === id);
   try {
     await db.collection("deals").doc(id).delete();
+    if (dealToDelete) {
+      const { id: _drop, ...dataWithoutId } = dealToDelete;
+      state.lastDeleted = { id, data: dataWithoutId };
+      clearTimeout(undoDeleteTimer);
+      undoDeleteTimer = setTimeout(() => { state.lastDeleted = null; render(); }, 8000);
+    }
   } catch (e) {
     state.error = "Couldn't delete that. Try again.";
   } finally {
     state.confirmDeleteId = null; render();
   }
+}
+async function undoDelete() {
+  if (!state.lastDeleted) return;
+  const { id, data } = state.lastDeleted;
+  clearTimeout(undoDeleteTimer);
+  state.lastDeleted = null;
+  try {
+    await db.collection("deals").doc(id).set(data);
+  } catch (e) {
+    state.error = "Couldn't restore that deal — you may need to re-add it manually.";
+  }
+  render();
 }
 // Note: the "sync starters" feature has been removed on purpose — it upserted by venue
 // name, which risks clobbering hand edits once everyone's data is loaded in. SAVANNAH_STARTER_DEALS
@@ -1484,6 +1521,11 @@ function render() {
       </div>
     </header>
     <main>
+      ${state.lastDeleted ? `
+        <div class="error-banner" style="background:rgba(201,162,39,0.2);border-color:rgba(201,162,39,0.4);display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <span>Deleted "${esc(state.lastDeleted.data.venue)}".</span>
+          <button type="button" id="undo-delete-btn" class="icon-btn" style="border-color:rgba(239,231,216,0.4);color:var(--off-white);flex-shrink:0;">Undo</button>
+        </div>` : ""}
       ${state.error ? `<div class="error-banner">${esc(state.error)}</div>` : ""}
       ${state.loading ? `<p style="opacity:.7;text-align:center;margin-top:60px;">Loading the tab…</p>` : (state.view === 'map' ? renderMapView(visibleDeals) : renderDealsOrEmpty(visibleDeals))}
     </main>
@@ -1887,6 +1929,7 @@ function renderAbout() {
         <p style="font-size:13px;opacity:.8;margin:0 0 16px;">
           A shared, live-updating happy hour tracker built for the group. Anyone with the link can add, edit, or delete deals — changes show up for everyone right away. Use the Map view to browse by location, and filters up top to see what's pouring now or check a specific day.
         </p>
+        <button type="button" class="btn-ghost" id="export-backup-btn" style="margin-bottom:16px;">⬇ Download backup (JSON)</button>
         <div class="tear-divider"></div>
         <p class="field-label" style="margin-bottom:10px;">Updates</p>
         ${CHANGELOG.map(group => `
@@ -2187,6 +2230,18 @@ function bindEvents() {
         return;
       }
 
+      if (state.editingDeal && form.dataset.conflictAck !== "true") {
+        const latest = state.deals.find(dl => dl.id === state.editingDeal.id);
+        const conflict = latest && latest.updatedAt && state.editingDeal.updatedAt && latest.updatedAt !== state.editingDeal.updatedAt;
+        if (conflict) {
+          errEl.textContent = `Someone else updated "${state.editingDeal.venue}" while you had this open. Submit again to save your version anyway (this overwrites their change) — or Cancel and reopen it to see the latest.`;
+          errEl.style.display = "block";
+          form.dataset.conflictAck = "true";
+          f.querySelector('button[type="submit"]').textContent = "Save anyway";
+          return;
+        }
+      }
+
       const submitBtn = f.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       const address = f.address.value.trim();
@@ -2233,6 +2288,9 @@ function bindEvents() {
     };
   }
 
+  const undoDeleteBtn = document.getElementById("undo-delete-btn");
+  if (undoDeleteBtn) undoDeleteBtn.onclick = () => undoDelete();
+
   const confirmOverlay = document.getElementById("confirm-overlay");
   if (confirmOverlay) {
     confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) { state.confirmDeleteId = null; render(); } };
@@ -2244,6 +2302,8 @@ function bindEvents() {
   if (aboutOverlay) {
     aboutOverlay.onclick = (e) => { if (e.target === aboutOverlay) { state.showAbout = false; render(); } };
     document.getElementById("about-close").onclick = () => { state.showAbout = false; render(); };
+    const exportBtn = document.getElementById("export-backup-btn");
+    if (exportBtn) exportBtn.onclick = () => exportBackup();
   }
 }
 
