@@ -778,14 +778,29 @@ const SAVANNAH_STARTER_DEALS = [
 
 const CHANGELOG = [
   { date: "Latest", items: [
+    "Added a backup/export button (About panel) that downloads everything on the tab as JSON.",
+    "Deleting a deal now shows an 8-second Undo instead of being instantly final.",
+    "Added a warning if someone else edited a venue while you had it open, instead of silently overwriting their change.",
+    "Fixed a bug where any background change to the shared tab could wipe out text you were mid-typing in an open form.",
+    "Fixed \"Starting soon\" sort miscounting currently-pouring deals as a week away instead of happening now.",
+    "\"Starting soon\" now automatically switches off \"Pouring now\" filter, since together they only showed what's already active.",
+    "Added manual pin placement — tap the map to set a location if the address can't be auto-found (or to nudge an existing pin).",
+    "Fixed a bug where editing a venue's address wouldn't move its map pin if re-geocoding failed.",
+    "Added a shared, per-city neighborhoods list — a dropdown (with \"add new\") when entering a deal, and a management panel to edit the list directly. Savannah's official 118-neighborhood list is seeded in automatically.",
+    "\"Group by area\" now nests under a city header when more than one city is on the tab.",
+    "Added a City filter and full street address display on listings, for tracking more than one town.",
+    "Added a 🏠 button on the map that zooms to every pin in the selected city.",
+    "Consecutive days now collapse to ranges everywhere (\"Mon–Fri\" instead of five separate tags or a comma list).",
+    "Happy hour info is now optional when adding a place — you can drop a pin first and fill in deals later.",
+    "Fixed the \"Add deal\" form being visually blocked by the map when opened from Map view.",
+    "Permanently removed \"sync Savannah starters\" — the hours migration it was brought back for is done.",
+  ]},
+  { date: "Earlier", items: [
     "Added \"Verified X ago\" to each listing, based on when it was last edited.",
     "Added a Share button — uses your phone's share sheet (or copies text) to send a deal to a group chat.",
     "Warns you if you're about to add a venue that's already on the tab.",
     "Added a Surprise Me button that jumps to a random spot that's pouring right now.",
     "Added Group by area — optional neighborhood section headers in list view.",
-    "Temporarily restored \"sync Savannah starters\" to push the new hours format through — remove again once run.",
-  ]},
-  { date: "Earlier", items: [
     "Operating hours now use the same day-block editor as happy hour times — no more free-text guessing, and hours can differ by day.",
     "Added an \"Open now\" filter, separate from \"Pouring now\" (which is about the happy hour itself).",
     "Added search across venue name, neighborhood, notes, and drink/food items.",
@@ -1927,7 +1942,7 @@ function renderAbout() {
       <div class="ticket" style="max-width:480px;width:100%;padding:26px 24px 20px;margin-top:10px;max-height:80vh;overflow-y:auto;">
         <h2 class="display" style="font-size:22px;font-weight:700;margin:0 0 6px;">About Sav Happy Hour</h2>
         <p style="font-size:13px;opacity:.8;margin:0 0 16px;">
-          A shared, live-updating happy hour tracker built for the group. Anyone with the link can add, edit, or delete deals — changes show up for everyone right away. Use the Map view to browse by location, and filters up top to see what's pouring now or check a specific day.
+          A shared, live-updating happy hour tracker built for the group. Anyone with the link can add, edit, or delete deals — changes show up for everyone right away. Search or filter by day/open-now/pouring-now, sort by distance or soonest, star favorites, and browse by List or Map. Tracks multiple cities if you use it beyond Savannah, with a shared neighborhoods list per city.
         </p>
         <button type="button" class="btn-ghost" id="export-backup-btn" style="margin-bottom:16px;">⬇ Download backup (JSON)</button>
         <div class="tear-divider"></div>
